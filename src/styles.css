@@ -3,10 +3,10 @@
 .theme-picker.is-asleep:not(:focus-within):not(:hover) { opacity: 0; pointer-events: none; }
 .native-radio { width: min(100%,1280px); min-width: 0; position: relative; }
 .native-stage { height: min(78svh,740px); min-height: 430px; position: relative; touch-action: none; }
-.native-stage>canvas { display: block; cursor: grab; }.native-stage>canvas:active { cursor: grabbing; }
+.native-stage>canvas { display: block; cursor: grab; }.native-stage>canvas:active,.native-stage>canvas.native-canvas-dragging { cursor: grabbing; }.native-stage>canvas.native-canvas-action { cursor: pointer; }
 .native-stage>canvas:focus:not(:focus-visible) { outline: none; }
 .native-stage>canvas:focus-visible { outline: 1px solid #87947b; outline-offset: 4px; border-radius: 12px; }
-.native-css-scene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.native-css-scene { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }.native-css-scene-hidden,.native-screen-hidden { visibility: hidden; }
 .native-glass { width: 900px; height: 250px; background: #17221e; color: #d9e8ca; pointer-events: auto; overflow: hidden; font: 34px/1.25 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; --ink:#d9e8ca; }
 .native-screen-content { width: 100%; height: 100%; position: relative; padding: 12px 24px; }
 .native-glass button { background: none; border: 0; text-align: left; color: inherit; padding: 0; }

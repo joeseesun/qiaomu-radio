@@ -118,14 +118,14 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     light.shadow.normalBias=.015;light.shadow.bias=-.0001;light.shadow.radius=4;light.shadow.blurSamples=8;scene.add(light);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.22,color:0x45503c}));
     floor.rotation.x=-Math.PI/2;floor.position.y=RADIO_FLOOR;floor.receiveShadow=true;scene.add(floor);
-    const css=new CSS3DRenderer();css.domElement.className="native-css-scene";css.domElement.style.visibility="hidden";element.appendChild(css.domElement);
+    const css=new CSS3DRenderer();css.domElement.className="native-css-scene native-css-scene-hidden";element.appendChild(css.domElement);
     screenElement.className="native-glass";
     const cssScene=new THREE.Scene(), screenObject=new CSS3DObject(screenElement);
     screenObject.position.set(RADIO_SCREEN.x,RADIO_SCREEN.y,RADIO_SCREEN.z);screenObject.scale.setScalar(RADIO_SCREEN.width/900);cssScene.add(screenObject);
     let expansion=0,expansionGoal=0;
     const bounds=new THREE.Box3();
     const disposeTree=(object:THREE.Object3D)=>object.traverse(child=>{if(child instanceof THREE.Mesh){child.geometry.dispose();for(const m of Array.isArray(child.material)?child.material:[child.material]){Object.values(m).forEach(v=>{if(v instanceof THREE.Texture)v.dispose();});m.dispose();}}});
-    css.domElement.style.visibility="visible";setReady(true);
+    css.domElement.classList.remove("native-css-scene-hidden");setReady(true);
     const aim=(position:[number,number,number],lookAt:[number,number,number])=>{
       const damping=controls.enableDamping;controls.enableDamping=false;
       camera.position.set(...position);controls.target.set(...lookAt);controls.update();
@@ -161,10 +161,10 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       renderer.domElement.setPointerCapture(e.pointerId);
       const angle=(action==="tune"||action==="volume")?knobPoint(e,action):null;
       gesture={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,action,value:physicalVolume.current,angle:knobs[action]?.rotation.z||0,lastAngle:angle,circular:angle!==null,arc:0,steps:0,moved:false};
-      renderer.domElement.style.cursor="pointer";
+      renderer.domElement.classList.add("native-canvas-action");
     };
     const move=(e:PointerEvent)=>{
-      if(!gesture||gesture.id!==e.pointerId){renderer.domElement.style.cursor=hit(e)?.userData.action?"pointer":"grab";return;}
+      if(!gesture||gesture.id!==e.pointerId){renderer.domElement.classList.toggle("native-canvas-action",Boolean(hit(e)?.userData.action));return;}
       e.preventDefault();e.stopImmediatePropagation();
       const g=gesture,dx=e.clientX-g.lastX,dy=e.clientY-g.lastY;
       g.moved ||= Math.hypot(e.clientX-g.x,e.clientY-g.y)>4;
@@ -186,7 +186,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       const active=gesture?.id===e.pointerId?gesture:null;
       if(active){pressMotion[active.action]=pulsePressMotion(pressMotion[active.action]);release();}
       if(renderer.domElement.hasPointerCapture(e.pointerId))renderer.domElement.releasePointerCapture(e.pointerId);
-      renderer.domElement.style.cursor=hit(e)?.userData.action?"pointer":"grab";
+      renderer.domElement.classList.toggle("native-canvas-action",Boolean(hit(e)?.userData.action));
       if(!active||active.moved)return;
       if(active.action==="power")current.current.p.onToggle();
       if(active.action==="tune")operations.current.pressTune();
@@ -200,7 +200,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       if(action==="volume")operations.current.volume(physicalVolume.current-Math.sign(e.deltaY)*.025);
       else operations.current.tune(Math.sign(e.deltaY));
     };
-    const cancel=(e:PointerEvent)=>{if(gesture?.id===e.pointerId)release();renderer.domElement.style.cursor="grab";};
+    const cancel=(e:PointerEvent)=>{if(gesture?.id===e.pointerId)release();renderer.domElement.classList.remove("native-canvas-action","native-canvas-dragging");};
     const key=(e:KeyboardEvent)=>{
       if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","Enter","m","M","Home"].includes(e.key))return;
       e.preventDefault();e.stopPropagation();
@@ -213,8 +213,8 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     };
     renderer.domElement.tabIndex=0;
     renderer.domElement.setAttribute("aria-label","收音机：左右键即时调台，Enter 播放暂停，上下键音量，M 静音，Home 恢复视角");
-    const orbitStart=()=>{atHome=false;renderer.domElement.style.cursor="grabbing";};
-    const orbitEnd=()=>{renderer.domElement.style.cursor="grab";};
+    const orbitStart=()=>{atHome=false;renderer.domElement.classList.add("native-canvas-dragging");};
+    const orbitEnd=()=>{renderer.domElement.classList.remove("native-canvas-dragging");};
     controls.addEventListener("start",orbitStart);controls.addEventListener("end",orbitEnd);
     renderer.domElement.addEventListener("keydown",key);
     renderer.domElement.addEventListener("pointerdown",down,true);renderer.domElement.addEventListener("pointermove",move,true);renderer.domElement.addEventListener("pointerup",up,true);renderer.domElement.addEventListener("pointercancel",cancel,true);renderer.domElement.addEventListener("lostpointercapture",cancel,true);renderer.domElement.addEventListener("wheel",wheel,{passive:false,capture:true});
@@ -232,7 +232,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       device.updateMatrixWorld(true);screenObject.position.copy(device.localToWorld(new THREE.Vector3(RADIO_SCREEN.x,RADIO_SCREEN.y,RADIO_SCREEN.z)));screenObject.quaternion.copy(device.quaternion);
       const facing=new THREE.Vector3(0,0,1).applyQuaternion(device.quaternion).dot(camera.position.clone().sub(screenObject.position).normalize());
       const visible=expansion<.02&&facing>.18;
-      screenElement.style.visibility=visible?"visible":"hidden";screenElement.inert=!visible;
+      screenElement.classList.toggle("native-screen-hidden",!visible);screenElement.inert=!visible;
       renderer.render(scene,camera);css.render(cssScene,camera);
     });
     return()=>{view.current=null;resize.disconnect();renderer.setAnimationLoop(null);controls.removeEventListener("start",orbitStart);controls.removeEventListener("end",orbitEnd);controls.dispose();renderer.domElement.removeEventListener("keydown",key);renderer.domElement.removeEventListener("pointerdown",down,true);renderer.domElement.removeEventListener("pointermove",move,true);renderer.domElement.removeEventListener("pointerup",up,true);renderer.domElement.removeEventListener("pointercancel",cancel,true);renderer.domElement.removeEventListener("lostpointercapture",cancel,true);renderer.domElement.removeEventListener("wheel",wheel,true);disposeTree(scene);environment.dispose();room.dispose();pmrem.dispose();renderer.dispose();renderer.domElement.remove();css.domElement.remove();};
