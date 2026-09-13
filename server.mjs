@@ -208,7 +208,9 @@ async function globalPopularStations() {
   try {
     const raw = await radioFetch("/json/stations/topvote/200?hidebroken=true");
     const selected = selectPopularMusic(raw, 20).map(cleanStation);
-    return selected.length >= 12 ? selected : GLOBAL_CURATED_STATIONS;
+    if (selected.length < 12) return GLOBAL_CURATED_STATIONS;
+    const selectedUrls = new Set(selected.map((station) => station.streamUrl));
+    return [...selected, ...GLOBAL_CURATED_STATIONS.filter((station) => !selectedUrls.has(station.streamUrl))].slice(0, 20);
   } catch { return GLOBAL_CURATED_STATIONS; }
 }
 
@@ -229,6 +231,9 @@ app.get("/api/stations", async (request, response) => {
   const mood = String(request.query.mood || "focus");
   const query = String(request.query.q || "").trim().slice(0, 80);
   const source = String(request.query.source || "radio-browser");
+  if (source === "global-curated") {
+    return response.json({ stations: await globalPopularStations(), cached: false, source: "global-curated" });
+  }
   if (source === "regional") {
     const regional = await regionalStations(request);
     return response.json({ ...regional, cached: regional.source === "global-fallback" });

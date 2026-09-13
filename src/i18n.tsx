@@ -6,10 +6,10 @@ export const LOCALE_LABELS: Record<Locale, string> = { "zh-CN": "简体中文", 
 const KEY = "qiaomu-radio-locale-v1";
 
 const zh = {
-  "theme.switch":"切换主题","theme.menu":"播放器主题","theme.fantasy":"魔兽世界 3D","theme.rams":"博朗 · 3D","theme.editorial":"极简","theme.pocket":"iPod","theme.deck":"Winamp","theme.console":"foobar2000","theme.china":"收音机",
+  "theme.switch":"切换主题","theme.menu":"播放器主题","theme.fantasy":"魔兽世界 3D","theme.rams":"博朗 · 3D","theme.editorial":"极简","theme.pocket":"iPod","theme.deck":"Winamp","theme.console":"foobar2000",
   "page.now":"正在播放","page.menu":"乔木电台","page.channels":"频道","page.stations":"电台列表","page.favorites":"喜欢的电台","page.history":"最近收听","page.search":"搜索电台","page.info":"关于电台","page.support":"支持与关注","page.language":"语言",
   "status.connecting":"连接中…","status.live":"正在直播","status.paused":"已暂停","now.title":"此刻，听点什么","now.prompt":"按播放，遇见下一段声音。","live.radio":"电台直播",
-  "search.name":"电台名称","search.submit":"提交搜索","search.current":"搜索当前电台来源","search.china":"中国电台","search.global":"全球电台",
+  "search.name":"电台名称","search.submit":"提交搜索","search.current":"搜索当前电台来源","search.china":"中国电台","search.global":"全球精选 20",
   "info.text":"全球电台来自 Radio Browser，中国电台使用精选公开直播源。喜欢与收听记录保存在本机。","info.website":"电台官网",
   "empty.stations":"还没有电台，去频道里选一种心情。","empty.favorites":"按下爱心，把喜欢的声音留在这里。","empty.history":"开始收听后，电台会留在这里。","empty.loading":"正在寻找电台…",
   "action.like":"喜欢","action.unlike":"取消喜欢","action.dislike":"不喜欢并换台","action.list":"电台列表","action.retry":"重试","action.volume":"音量","action.previous":"上一家电台","action.next":"下一家电台","action.play":"播放","action.pause":"暂停","action.stop":"停止","action.menu":"打开菜单","action.back":"返回菜单","action.restore":"恢复原始视角","action.select":"选择当前菜单项","action.about":"关于播放器","action.explore":"探索机身","action.explode":"拆解展示","action.collapse":"合上机身","action.favoriteCurrent":"收藏当前电台","action.unfavoriteCurrent":"取消收藏当前电台","language.choose":"选择界面语言",
@@ -20,10 +20,10 @@ const zh = {
 export type MessageKey = keyof typeof zh;
 
 const en: Partial<Record<MessageKey,string>> = {
-  "theme.switch":"Switch theme","theme.menu":"Player themes","theme.fantasy":"Fantasy 3D","theme.rams":"Braun · 3D","theme.editorial":"Minimal","theme.china":"Radio",
+  "theme.switch":"Switch theme","theme.menu":"Player themes","theme.fantasy":"Fantasy 3D","theme.rams":"Braun · 3D","theme.editorial":"Minimal",
   "page.now":"Now playing","page.menu":"Qiaomu Radio","page.channels":"Channels","page.stations":"Stations","page.favorites":"Favorites","page.history":"History","page.search":"Search","page.info":"About","page.support":"Support & follow","page.language":"Language",
   "status.connecting":"Connecting…","status.live":"Live","status.paused":"Paused","now.title":"What shall we hear?","now.prompt":"Press play to discover a station.","live.radio":"Live radio",
-  "search.name":"Station name","search.submit":"Search","search.current":"Search the current source","search.china":"China stations","search.global":"Global stations","info.text":"Global stations come from Radio Browser. China stations use reviewed public streams. Likes and history stay on this device.","info.website":"Station website",
+  "search.name":"Station name","search.submit":"Search","search.current":"Search the current source","search.china":"China stations","search.global":"Global Picks 20","info.text":"Global stations come from Radio Browser. China stations use reviewed public streams. Likes and history stay on this device.","info.website":"Station website",
   "empty.stations":"No stations yet. Choose a channel.","empty.favorites":"Tap the heart to save a station.","empty.history":"Stations appear here after listening.","empty.loading":"Finding stations…",
   "action.like":"Like","action.unlike":"Unlike","action.dislike":"Dislike and skip","action.list":"Stations","action.retry":"Retry","action.volume":"Volume","action.previous":"Previous station","action.next":"Next station","action.play":"Play","action.pause":"Pause","action.stop":"Stop","action.menu":"Open menu","action.back":"Back to menu","action.restore":"Restore view","action.select":"Select item","action.about":"About player","action.explore":"Explore radio","action.explode":"Exploded view","action.collapse":"Close radio","action.favoriteCurrent":"Favorite current station","action.unfavoriteCurrent":"Unfavorite current station","language.choose":"Choose interface language","label.region":"Region","label.format":"Format","label.station":"Station","status.stopped":"Playback stopped","status.broadcast":"Broadcast",
   "mood.unwind":"Unwind","mood.focus":"Focus","mood.jazz":"Jazz","mood.classical":"Classical","mood.energy":"Energy","mood.world":"World",
@@ -47,6 +47,10 @@ const ja: Partial<Record<MessageKey,string>> = {
 };
 
 const messages: Record<Locale, Partial<Record<MessageKey,string>>> = { "zh-CN": zh, en, es, fr, de, ja };
+const globalPickLabels: Record<Locale, string> = {
+  "zh-CN": "全球精选 20", en: "Global Picks 20", es: "20 selecciones globales",
+  fr: "20 sélections mondiales", de: "20 globale Empfehlungen", ja: "世界のおすすめ 20 局",
+};
 export function detectLocale(languages: readonly string[] = navigator.languages) {
   for (const language of languages) {
     const normalized = language.toLowerCase();
@@ -55,7 +59,10 @@ export function detectLocale(languages: readonly string[] = navigator.languages)
   }
   return "en" as Locale;
 }
-export function message(locale: Locale, key: MessageKey) { return messages[locale][key] || en[key] || zh[key]; }
+export function message(locale: Locale, key: MessageKey) {
+  if (key === "search.global") return globalPickLabels[locale];
+  return messages[locale][key] || en[key] || zh[key];
+}
 export function regionName(locale: Locale, code: string, fallback: string) {
   try { return code ? new Intl.DisplayNames([locale], { type: "region" }).of(code.toUpperCase()) || fallback : fallback; } catch { return fallback; }
 }

@@ -234,6 +234,11 @@ export function App() {
     if (candidates.length) void startSequence(candidates); else setError("这一频道暂时没有更多可播电台，换个心情试试。");
   }, [queue, stations, current?.id, startSequence]);
 
+  const playPrevious = useCallback(() => {
+    const previous = profile.history.find((entry) => entry.station.id !== current?.id);
+    if (previous) void startSequence([previous.station, ...queue]);
+  }, [current?.id, profile.history, queue, startSequence]);
+
   const togglePlayback = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -271,6 +276,12 @@ export function App() {
     void fetchStations(nextMood, "", "radio-browser", true);
   };
 
+  const chooseGlobal = () => {
+    playbackRunRef.current += 1; stopCurrentStream();
+    setSource("global-curated"); setQuery(""); setCurrent(null); setIsPlaying(false);
+    void fetchStations(mood, "", "global-curated", true);
+  };
+
   const chooseTheme = (nextThemeId: ThemeId) => {
     const nextTheme = getTheme(nextThemeId);
     playbackRunRef.current += 1; stopCurrentStream();
@@ -288,6 +299,31 @@ export function App() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [playNext, togglePlayback]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    navigator.mediaSession.metadata = current && typeof MediaMetadata !== "undefined" ? new MediaMetadata({
+      title: current.name,
+      artist: current.country || "Qiaomu Radio",
+      album: "Qiaomu Radio",
+      artwork: current.favicon.startsWith("https://") ? [{ src: current.favicon }] : undefined,
+    }) : null;
+    const actions: Array<[MediaSessionAction, MediaSessionActionHandler | null]> = [
+      ["play", () => { void togglePlayback(); }],
+      ["pause", () => { void togglePlayback(); }],
+      ["previoustrack", playPrevious],
+      ["nexttrack", playNext],
+    ];
+    for (const [action, handler] of actions) {
+      try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* unsupported action */ }
+    }
+    return () => {
+      for (const [action] of actions) {
+        try { navigator.mediaSession.setActionHandler(action, null); } catch { /* unsupported action */ }
+      }
+    };
+  }, [current, isPlaying, playNext, playPrevious, togglePlayback]);
 
   const retryCurrentSeries = () => void fetchStations(mood, query, source, true);
 
@@ -333,10 +369,7 @@ export function App() {
           liked={liked}
           onToggle={() => void togglePlayback()}
           onNext={playNext}
-          onPrevious={() => {
-            const previous = profile.history.find((entry) => entry.station.id !== current?.id);
-            if (previous) void startSequence([previous.station, ...queue]);
-          }}
+          onPrevious={playPrevious}
           onLike={() => feedback("like")}
           onDislike={() => feedback("dislike")}
           onPlay={(station) => void startSequence([station, ...queue.filter((item) => item.id !== station.id)])}
@@ -346,6 +379,7 @@ export function App() {
             setSource("china-curated"); setQuery("");
             void fetchStations(mood, "", "china-curated", true);
           }}
+          onGlobal={chooseGlobal}
           onVolume={(value) => {
             setVolume(value);
             if (audioRef.current) audioRef.current.volume = value;

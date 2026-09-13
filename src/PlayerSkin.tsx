@@ -31,6 +31,7 @@ export type PlayerProps = {
   onMood: (mood: MoodId) => void;
   onSearch: (query: string) => void;
   onChina: () => void;
+  onGlobal: () => void;
   onVolume: (volume: number) => void;
   onRetry: () => void;
 };
@@ -69,6 +70,7 @@ export function PlayerSkin(props: PlayerProps) {
     { label: t("page.info"), action: () => open("info") },
   ];
   const channelRows = [
+    { label: t("search.global"), action: () => { props.onGlobal(); open("now"); } },
     ...props.moods.map((item) => ({ label: item.label, action: () => { props.onMood(item.id); open("now"); } })),
     { label: t("search.china"), action: () => { props.onChina(); open("now"); } },
   ];
@@ -130,7 +132,7 @@ export function PlayerSkin(props: PlayerProps) {
             <div><input id="radio-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={props.source === "china-curated" ? "北京、央广、音乐" : "Jazz24, FIP, KEXP…"} /><button aria-label={t("search.submit")}><Search size={18} /></button></div>
             <p>{t("search.current")}</p>
             <button type="button" className="source-choice" onClick={() => { props.onChina(); open("stations"); }}>{t("search.china")} <ChevronRight size={16} /></button>
-            <button type="button" className="source-choice" onClick={() => { props.onMood(props.mood); open("stations"); }}>{t("search.global")} <ChevronRight size={16} /></button>
+            <button type="button" className="source-choice" onClick={() => { props.onGlobal(); open("stations"); }}>{t("search.global")} <ChevronRight size={16} /></button>
           </form>
         ) : page === "support" ? (
           <SupportPanel />
@@ -164,7 +166,6 @@ export function PlayerSkin(props: PlayerProps) {
       {pocket ? <div className="device-engraving">iPod</div> :
         <div className="window-title"><span>{deck ? "WINAMP" : consoleSkin ? "foobar2000" : "Qiaomu Radio"}</span><span>{deck ? "● ● ●" : "LIVE RADIO"}</span></div>}
       {!pocket && navigation}
-      {theme === "china" && <div className="tuner" aria-hidden="true"><span>88</span><span>92</span><span>96</span><span>100</span><span>104</span><span>108</span><i /></div>}
       {screen}
       {pocket ? (
         <div className="ipod-wheel" onWheel={(event) => {

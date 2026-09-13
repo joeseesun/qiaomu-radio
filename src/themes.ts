@@ -65,15 +65,6 @@ export const RADIO_THEMES: RadioTheme[] = [
     source: "radio-browser",
     accent: "#75a7bd",
   },
-  {
-    id: "china",
-    label: "收音机",
-    family: "公开直播源",
-    note: "央广与广播机构官方源",
-    mood: "world",
-    source: "china-curated",
-    accent: "#a62f2b",
-  },
 ];
 
 export function getTheme(themeId: ThemeId) {
