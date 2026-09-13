@@ -19,11 +19,11 @@
     "dev:plugin": "node esbuild.plugin.mjs --watch",
     "build:web": "tsc -b && vite build",
     "build:plugin": "tsc -p tsconfig.plugin.json --noEmit && node esbuild.plugin.mjs",
-    "build": "npm run build:web && npm run build:plugin",
+    "build": "npm run build:plugin",
     "start": "node server.mjs",
     "test": "vitest run",
     "test:plugin": "vitest run plugin-src",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build:web && npm run build:plugin"
   },
   "dependencies": {
     "express": "^5.2.1",
