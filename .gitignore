@@ -1,6 +1,7 @@
 .qiaomu/launch-state.json
 node_modules/
 dist/
+.test-vault/
 .DS_Store
 npm-debug.log*
 *.tsbuildinfo

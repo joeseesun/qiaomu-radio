@@ -1,102 +1,152 @@
 # 乔木电台 · Qiaomu Radio
 
-[中文](#中文) · [English](#english) · [在线体验](https://radio.qiaomu.ai/)
+**中文** | [English](#english) · [在线电台](https://radio.qiaomu.ai/) · [GitHub Releases](https://github.com/joeseesun/qiaomu-radio/releases)
 
-![乔木电台魔兽世界 3D 主题设计概念图](public/og-radio.png)
+[![Version](https://img.shields.io/github/v/release/joeseesun/qiaomu-radio?display_name=tag)](https://github.com/joeseesun/qiaomu-radio/releases)
+[![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
+[![Obsidian](https://img.shields.io/badge/Obsidian-1.8.9%2B-7c3aed)](https://obsidian.md/)
 
-> 魔兽世界 3D 主题的设计概念图；可操作的 3D 模型与实时屏幕请以[线上页面](https://radio.qiaomu.ai/?theme=fantasy)为准。
+> 在 Obsidian 里发现和收听全球直播电台，让音乐陪你阅读、写作与思考。
+>
+> Discover and play live radio stations inside Obsidian while you read, write, and think.
 
-## 中文
+**已验证：** Obsidian 1.13.7 桌面端隔离 Vault；全球目录、搜索、MP3 直播、暂停、喜欢及最近收听读回均已真实操作。切台与音量控制已实现并通过代码测试，尚未完成 iOS/Android 真机验收。
 
-乔木电台是一台真正能操作的 3D 网络收音机。它把全球直播电台、轻量的本地推荐和六种完整播放器主题装进同一个安静界面：进入页面先听广播，需要搜索、收藏、历史或支持作者时，再从设备菜单进入。
+## 这是什么
 
-### 特性
+乔木电台是一个原生 Obsidian 社区插件，也是 [radio.qiaomu.ai](https://radio.qiaomu.ai/) 的笔记场景版本。它不在笔记里嵌网页，而是提供独立电台视图：打开就能选台，搜索、频道、播放控制、喜欢和历史都在同一个安静的播放器里。
 
-- 六种完整播放器：魔兽世界 3D、博朗 3D、极简、iPod、Winamp 和 foobar2000。
-- 实体交互：播放/暂停、上一家、下一家、收藏与音量都能直接操作；3D 旋钮、按钮和机身旋转有真实反馈。
-- 全球发现：所有主题的机内频道都提供“全球精选 20”、心情频道和经过人工核验的中国公开直播源。
-- 地区首播：首次访问按 IP 国家选择当地高票音乐电台；定位失败时回退跨地区的全球热门 20 台。
-- 连续播放：HLS 使用更深的滚动缓冲、分片重试和受控的同源内存预取，短暂网络波动不立即换台。
-- 六种界面语言：简体中文、英语、西班牙语、法语、德语、日语；电台名称保持广播机构原文。
-- 系统媒体控制：支持锁屏、键盘和系统播放面板的播放、暂停、上一台和下一台。
-- 诚实元数据：SomaFM 显示官方实时曲目；没有可靠曲目信息时明确显示“电台直播”。
-- 本地口味：喜欢、跳过、标签权重和历史只保存在当前浏览器。
-- 优雅降级：流媒体连接失败会解释原因并自动尝试下一家。
-- 纯净首页：流量统计、打赏和关注入口不占据播放器首页，只在设备菜单的“支持与关注”中出现。
+## 核心能力
 
-### 本地运行
+| 能力 | 你得到什么 |
+| --- | --- |
+| 全球电台目录 | 通过 Radio Browser 发现真实直播电台，目录失败时使用乔木审核过的备用台单 |
+| 场景频道 | 专注、松弛、爵士、古典、能量与世界音乐快速切换 |
+| 本地推荐 | 根据喜欢、跳过和最近收听对“为你推荐”重新排序 |
+| 连续收听 | 播放失败时解释原因并自动尝试下一家电台 |
+| 搜索与收藏 | 按电台名称搜索，把喜欢的电台留在当前 Vault |
+| 原生体验 | Obsidian 命令、功能区入口、设置页、深浅主题与键盘焦点完整适配 |
+
+## 安装
+
+### Obsidian 社区插件
+
+插件正在提交 Obsidian 社区目录。审核通过并公开后，可在 Obsidian 中打开“设置 → 第三方插件 → 浏览”，搜索 `Qiaomu Radio` 安装。
+
+### BRAT
+
+1. 安装并启用 [BRAT](https://github.com/TfTHacker/obsidian42-brat)。
+2. 选择 **Add Beta plugin**。
+3. 输入 `joeseesun/qiaomu-radio`。
+
+### 手动安装
+
+从 [GitHub Releases](https://github.com/joeseesun/qiaomu-radio/releases) 下载同一版本的 `main.js`、`manifest.json` 和 `styles.css`，放到 `<Vault>/.obsidian/plugins/qiaomu-radio/`，然后在第三方插件设置中启用 **Qiaomu Radio**。
+
+## 使用
+
+1. 点击 Obsidian 左侧功能区的电台图标，或从命令面板运行“Qiaomu Radio: 打开电台”。
+2. 从“为你推荐”或场景频道选择一家电台。
+3. 用播放器暂停、切换上一家/下一家和调整音量。
+4. 点击心形加入喜欢；“喜欢”和“最近”频道只读取当前 Vault 的插件数据。
+
+直播源由各广播机构提供，随时可能下线、限流或限制地区。单个源失败不代表插件或目录失效。
+
+## 隐私与网络
+
+- 不需要账号，不包含客户端遥测，不上传你的笔记内容。
+- 喜欢、跳过、音量和收听历史保存在当前 Vault 的 `.obsidian/plugins/qiaomu-radio/data.json`。
+- 插件会请求 Radio Browser 的公共目录；目录不可用时请求 `radio.qiaomu.ai` 的备用目录。
+- 播放时直接连接所选广播机构的直播地址。电台运营方可能看到普通网络请求信息，例如 IP 地址和 User-Agent。
+- 插件不会读取、修改或上传 Vault 中的 Markdown 文件。
+
+## Web 版
+
+同一仓库还包含可独立运行的 [乔木电台 Web 版](https://radio.qiaomu.ai/)：六种完整播放器环境、3D 实体交互、全球电台、中文公开直播源和本地口味推荐。Obsidian 插件采用更轻、更原生的界面，不打包 3D 模型和服务端代码。
+
+![乔木电台 Web 版主视觉](public/og-radio.png)
+
+> 上图是 Web 版主视觉，不是 Obsidian 插件截图；插件功能以当前 Release 与真实宿主验收为准。
+
+## 从源码构建
 
 需要 Node.js 20 或更高版本。
 
 ```bash
 npm install
-npm run dev
+npm run build:plugin
+npm run test:plugin
 ```
 
-打开 `http://127.0.0.1:4173`。
+构建输出位于仓库根目录：`main.js`、`manifest.json`、`styles.css`。
 
-完整校验与生产运行：
+完整仓库同时包含 Web 版：
 
 ```bash
 npm run check
-npm run build
-NODE_ENV=production PORT=4173 npm start
+npm run dev
 ```
 
-生产服务同时包含前端静态文件和这些动态接口：`/api/stations`、`/api/play/:stationId`、`/api/now-playing`、`/api/health`。部署时不能只托管 `dist`。
+## 项目结构
 
-### 架构与设计
+```text
+plugin-src/          Obsidian 插件源码与测试
+src/                 Web 播放器源码
+server.mjs           Web 版目录与播放服务
+manifest.json        Obsidian 插件清单
+main.js              Obsidian 发布构建
+styles.css           Obsidian 插件样式
+versions.json        Obsidian 版本兼容映射
+```
 
-- React + TypeScript + Vite
-- Three.js 参数化博朗风格机身与 Hyper3D Rodin Gen-2.5 魔兽世界 3D 模型
-- Express 服务端代理 Radio Browser 与实时曲目信息
-- hls.js 兼容 Chrome/Edge，Safari 优先使用原生 HLS
-- Umami 无 Cookie 流量统计，仅在生产域名 `radio.qiaomu.ai` 上记数
+## 实测与边界
 
-交互和模型拆分边界见 [3D 建模功能契约](docs/RADIO-HARDWARE.md)，产品范围见 [PRD](docs/PRD.md)。
+- `npm run check`：18 个测试文件、52 项测试通过；Web 与插件生产构建通过。
+- Obsidian 1.13.7 / macOS：隔离 Vault 全新安装、加载全球目录、搜索 `rock`、播放 SomaFM MP3、暂停、收藏和收藏频道读回通过。
+- 插件构建约 600 KiB，低于本项目 5 MiB 发布预算。
+- 官方 Obsidian 市场审核、客户端公开搜索和移动真机属于独立验收阶段；GitHub Release 不等于已上架。
 
-### 数据、品牌与隐私
+## 许可与商业授权
 
-电台目录来自 [Radio Browser](https://www.radio-browser.info/)，音频流由各广播机构提供。中国波段使用项目内审核白名单，不在运行时抓取商业聚合站或第三方播放列表。首次访问时，服务端仅把访问 IP 交给 `country.is` 换取国家代码，不请求精确位置，也不把原始 IP 写入应用数据库；失败时直接使用全球热门 20 台。播放偏好、喜欢与历史仍只保存在浏览器本机。为改善短 HLS 直播窗口，已审核的 HLS 源会经过乔木服务器做最多约 90 秒的临时内存分片缓存，不落盘、不录制节目。
+源码按 [GNU GPL v3 或更高版本](LICENSE) 开源。闭源集成、白标或与 GPL 不兼容的分发方式，可参阅 [商业许可说明](COMMERCIAL-LICENSE.md) 联系向阳乔木。
 
-iPod、Winamp、foobar2000、博朗与魔兽世界等名称仅用于描述交互与视觉主题；本项目与相关品牌、暴雪娱乐没有关联，不使用官方标识、角色或故事素材。
-
-### 许可与支持
-
-源码按 [GNU GPL v3 或更高版本](LICENSE) 开源。闭源集成、白标与其他商业用途可联系向阳乔木获取独立商业授权，详情见 [商业许可说明](COMMERCIAL-LICENSE.md)。
-
-- 在线体验：[radio.qiaomu.ai](https://radio.qiaomu.ai/)
-- GitHub：[@joeseesun](https://github.com/joeseesun)
+- 主页：[qiaomu.ai](https://qiaomu.ai/)
+- 博客：[blog.qiaomu.ai](https://blog.qiaomu.ai/)
+- 推荐：[tuijian.qiaomu.ai](https://tuijian.qiaomu.ai/)
 - X：[@vista8](https://x.com/vista8)
-- 乔木推荐：[tuijian.qiaomu.ai](https://tuijian.qiaomu.ai/)
+- GitHub：[@joeseesun](https://github.com/joeseesun)
+- 微信公众号：向阳乔木推荐看
 
-## English
+欢迎提交 Issue 与 Pull Request。安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
 
-Qiaomu Radio is an operable 3D internet radio for discovering live stations around the world. Six self-contained player themes place playback, discovery, favorites, history, and volume controls inside the device itself, keeping the landing experience focused on listening.
+---
 
-### Highlights
+<a name="english"></a>
 
-- Six complete player environments, including two interactive 3D radios.
-- Global Picks 20 is available from the Channels menu in every theme.
-- Live global discovery via Radio Browser plus a reviewed set of public Chinese broadcaster streams.
-- Country-aware first-run stations with a global top-20 music fallback when IP country lookup fails.
-- Resilient HLS playback with rolling buffers, retry recovery, and short-lived in-memory segment prefetching for reviewed streams.
-- Six UI languages: Simplified Chinese, English, Spanish, French, German, and Japanese.
-- Media Session metadata and play/pause/previous/next handlers for supported system controls.
-- Local-only taste signals: likes, skips, tag weights, and listening history stay in your browser.
-- Honest metadata and graceful stream fallback.
-- A clean landing screen; analytics disclosure, donation, and follow links live inside the device menu.
+# English
 
-### Development
+Qiaomu Radio is a native Obsidian plugin for discovering and playing live radio while you read, write, and think. It provides one focused player view with station search, mood channels, local recommendations, favorites, history, playback controls, and graceful station fallback.
+
+## Install
+
+The plugin is being submitted to the Obsidian Community directory. After approval, search for **Qiaomu Radio** under **Settings → Community plugins → Browse**.
+
+For beta or manual installation, use BRAT with `joeseesun/qiaomu-radio`, or copy `main.js`, `manifest.json`, and `styles.css` from the same [GitHub Release](https://github.com/joeseesun/qiaomu-radio/releases) into `<Vault>/.obsidian/plugins/qiaomu-radio/`.
+
+## Privacy and limits
+
+No account or client telemetry is included. Favorites, skips, volume, and listening history stay in the current Vault's plugin data. The plugin contacts Radio Browser, `radio.qiaomu.ai` as a fallback directory, and the selected broadcaster's stream. It does not read, modify, or upload Markdown notes.
+
+Live streams can disappear, throttle requests, or be region restricted. Desktop behavior was verified in Obsidian 1.13.7 on macOS. The mobile-compatible build and responsive layout are present, but iOS and Android hardware testing is not yet claimed.
+
+## Development
 
 ```bash
 npm install
-npm run dev
-npm run check
+npm run build:plugin
+npm run test:plugin
 ```
 
-The production deployment requires the Node server; it is not a static-only Vite site.
+The repository also contains the [Qiaomu Radio web experience](https://radio.qiaomu.ai/). Run `npm run check` to test and build both surfaces.
 
-### License
-
-Licensed under [GPL-3.0-or-later](LICENSE). A separate commercial license is available for proprietary integration, white-label distribution, or terms incompatible with the GPL; see [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+Licensed under [GPL-3.0-or-later](LICENSE), with a separate commercial license available for proprietary use.
