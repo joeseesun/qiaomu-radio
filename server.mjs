@@ -223,6 +223,20 @@ app.get("/api/stations", async (request, response) => {
     cache.set(cacheKey, { at: Date.now(), stations });
     response.json({ stations, cached: false });
   } catch (error) {
+    const normalizedQuery = query.toLowerCase();
+    const fallbackStations = normalizedQuery
+      ? CHINA_STATIONS.filter((station) =>
+          [station.name, station.country, station.language, ...station.tags].join(" ").toLowerCase().includes(normalizedQuery),
+        )
+      : CHINA_STATIONS;
+    if (fallbackStations.length) {
+      return response.json({
+        stations: fallbackStations,
+        cached: true,
+        source: "china-fallback",
+        warning: "全球电台目录暂时不可用，已切换到中国公开电台。",
+      });
+    }
     response.status(502).json({
       error: "暂时联系不上全球电台目录，请稍后重试。",
       detail: error instanceof Error ? error.message : "unknown error",
