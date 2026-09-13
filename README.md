@@ -101,7 +101,7 @@ versions.json        Obsidian 版本兼容映射
 
 ## 实测与边界
 
-- `npm run check`：18 个测试文件、52 项测试通过；Web 与插件生产构建通过。
+- `npm run check`：19 个测试文件、53 项测试通过；Web 与插件生产构建通过。
 - Obsidian 1.13.7 / macOS：隔离 Vault 全新安装、加载全球目录、搜索 `rock`、播放 SomaFM MP3、暂停、收藏和收藏频道读回通过。
 - 插件构建约 600 KiB，低于本项目 5 MiB 发布预算。
 - 官方 Obsidian 市场审核、客户端公开搜索和移动真机属于独立验收阶段；GitHub Release 不等于已上架。

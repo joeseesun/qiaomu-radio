@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Hls from "hls.js";
+import type Hls from "hls.js";
 import { PlayerSkin } from "./PlayerSkin";
 import { applyFeedback, EMPTY_PROFILE, rankStations, recordStationOutcome } from "./recommendation";
 import { getTheme } from "./themes";
 import { ThemePicker } from "./ThemePicker";
 import type { MoodId, Station, StationSource, TasteProfile, ThemeId } from "./types";
 import { HLS_RADIO_CONFIG, PREFETCH_STATION_COUNT, STREAM_URL_CACHE_MS } from "./playbackPolicy";
+import { loadHlsRuntime } from "./hlsRuntime";
 import { useI18n, type MessageKey } from "./i18n";
 
 const MOODS: Array<{ id: MoodId; label: string; note: string; accent: string }> = [
@@ -123,6 +124,9 @@ export function App() {
     audio.removeAttribute("src");
     audio.load();
     audio.volume = volume;
+    const HlsRuntime = isHlsUrl(url) && !audio.canPlayType("application/vnd.apple.mpegurl")
+      ? await loadHlsRuntime()
+      : null;
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -141,18 +145,18 @@ export function App() {
       audio.addEventListener("playing", onPlaying, { once: true });
       audio.addEventListener("error", onAudioError, { once: true });
 
-      if (isHlsUrl(url) && !audio.canPlayType("application/vnd.apple.mpegurl") && Hls.isSupported()) {
+      if (HlsRuntime?.isSupported()) {
         let recoveryAttempts = 0;
-        const hls = new Hls(HLS_RADIO_CONFIG);
+        const hls = new HlsRuntime(HLS_RADIO_CONFIG);
         hlsRef.current = hls;
-        hls.on(Hls.Events.ERROR, (_event, data) => {
+        hls.on(HlsRuntime.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
           if (!settled || startingRef.current) { finish(new Error("HLS 直播源连接失败。")); return; }
-          if (recoveryAttempts < 2 && data.type === Hls.ErrorTypes.NETWORK_ERROR) { recoveryAttempts += 1; hls.startLoad(); return; }
-          if (recoveryAttempts < 2 && data.type === Hls.ErrorTypes.MEDIA_ERROR) { recoveryAttempts += 1; hls.recoverMediaError(); return; }
+          if (recoveryAttempts < 2 && data.type === HlsRuntime.ErrorTypes.NETWORK_ERROR) { recoveryAttempts += 1; hls.startLoad(); return; }
+          if (recoveryAttempts < 2 && data.type === HlsRuntime.ErrorTypes.MEDIA_ERROR) { recoveryAttempts += 1; hls.recoverMediaError(); return; }
           recoverRef.current();
         });
-        hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().catch((reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。"))); });
+        hls.on(HlsRuntime.Events.MANIFEST_PARSED, () => { audio.play().catch((reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。"))); });
         hls.loadSource(url);
         hls.attachMedia(audio);
       } else {
