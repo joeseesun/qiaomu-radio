@@ -5,10 +5,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { CSS3DObject, CSS3DRenderer } from "three/addons/renderers/CSS3DRenderer.js";
-import { Heart, ListMusic, Pause, Play, RotateCcw, Search, SkipBack, SkipForward, SlidersHorizontal, ZoomIn } from "lucide-react";
 import type { PlayerProps } from "./PlayerSkin";
 import type { NowPlaying } from "./useNowPlaying";
-import NativeRadio from "./NativeRadio";
+import { ModelLoader } from "./ModelLoader";
 import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPressFeedback";
 import { bindFantasySpeakers } from "./fantasySurface";
 import { stepSpeakerMotion, speakerExcursion } from "./fantasySpeakerMotion";
@@ -16,18 +15,14 @@ import { clockwiseArc, clampVolume, turnVolume } from "./radioGestures";
 import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, normalizeFantasyModel, surfacePatch, surfacePoint, type FantasyAction } from "./fantasySurface";
 
 type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support";
-type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: Page) => void; track: NowPlaying | null; variant?: "rams" | "fantasy" };
-type SceneApi = { reset: () => void; zoom: () => void; menu: (open: boolean) => void };
+type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: Page) => void; track: NowPlaying | null };
+type SceneApi = { reset: () => void; menu: (open: boolean) => void };
 
-export default function RamsRadio(props: Props) {
-  return props.variant === "fantasy" ? <FantasyRadio {...props} /> : <NativeRadio player={props.player} track={props.track} />;
-}
-
-function FantasyRadio({ player: p, screen, page, open, track }: Props) {
+export default function FantasyRadio({ player: p, screen, page, open, track }: Props) {
   const host = useRef<HTMLDivElement>(null), api = useRef<SceneApi | null>(null);
   const [screenElement] = useState(() => document.createElement("div"));
-  const [ready, setReady] = useState(false), [failed, setFailed] = useState(false);
-  const [panel, setPanel] = useState(false), [simple, setSimple] = useState(false), [awake, setAwake] = useState(false);
+  const [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [progress, setProgress] = useState(.04);
+  const [panel, setPanel] = useState(false);
   const [muted, setMuted] = useState(false), remembered = useRef(p.volume);
   const current = useRef({ p, track, open, muted, panel }); current.current = { p, track, open, muted, panel };
   const physicalVolume = useRef(p.volume); physicalVolume.current = muted ? remembered.current : p.volume;
@@ -46,18 +41,11 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
   }, [page,panel,screenElement]);
   useEffect(() => { if(muted&&p.volume>0)setMuted(false); }, [muted,p.volume]);
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const wake = () => { setAwake(true); clearTimeout(timer); timer=setTimeout(()=>setAwake(false),4000); };
-    document.addEventListener("pointerdown",wake); document.addEventListener("keydown",wake);
-    return () => { clearTimeout(timer); document.removeEventListener("pointerdown",wake); document.removeEventListener("keydown",wake); };
-  }, []);
-
-  useEffect(() => {
     const element = host.current!;
     let disposed=false, loaded=false, focused=false, atHome=true;
     let renderer: THREE.WebGLRenderer;
-    try { renderer=new THREE.WebGLRenderer({ antialias:true, alpha:true }); } catch { setFailed(true); return; }
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.95;
+    try { renderer=new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:"high-performance" }); } catch { setFailed(true); return; }
+    renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.95;
     renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFShadowMap; element.appendChild(renderer.domElement);
     const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(32,1,.01,30);
     const homeDistance=()=>Math.max(4.1,1.63/(Math.tan(THREE.MathUtils.degToRad(16))*camera.aspect));
@@ -67,7 +55,7 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
     const pmrem=new THREE.PMREMGenerator(renderer), room=new RoomEnvironment(), environment=pmrem.fromScene(room);
     scene.environment=environment.texture; scene.environmentIntensity=.75; scene.add(new THREE.HemisphereLight(0xe2eaff,0x30221b,.7));
     const light=new THREE.DirectionalLight(0xffe2ae,2); light.position.set(-3,5,4); light.castShadow=true;
-    light.shadow.mapSize.set(2048,2048); Object.assign(light.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:12}); light.shadow.bias=-.0002; light.shadow.normalBias=.003; scene.add(light);
+    light.shadow.mapSize.set(1024,1024); Object.assign(light.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:12}); light.shadow.bias=-.0002; light.shadow.normalBias=.003; scene.add(light);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.3})); floor.rotation.x=-Math.PI/2; floor.position.y=-.525; floor.receiveShadow=true; scene.add(floor);
     const device=new THREE.Group(); scene.add(device);
     let model: THREE.Object3D | null=null, deform: ReturnType<typeof bindFantasyPress> | null=null;
@@ -101,15 +89,15 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
         }
         device.updateMatrixWorld(true);
         // Include the surface glows so they follow the same weighted stroke as the buttons.
-        deform=bindFantasyPress(device); speakers=bindFantasySpeakers(model); loaded=true;setReady(true);
+        deform=bindFantasyPress(device); speakers=bindFantasySpeakers(model); loaded=true;setProgress(1);setReady(true);
       } catch {setFailed(true);}
-    },undefined,()=>{if(!disposed)setFailed(true);});
+    },event=>{if(!disposed&&event.total>0)setProgress(Math.max(.04,Math.min(.98,event.loaded/event.total)));},()=>{if(!disposed)setFailed(true);});
 
     const cameraGoal=camera.position.clone(), targetGoal=controls.target.clone(); let framing=false;
     const frame=(position:THREE.Vector3,target:THREE.Vector3)=>{cameraGoal.copy(position);targetGoal.copy(target);framing=true;controls.enabled=false;};
     const reset=()=>{atHome=true;frame(new THREE.Vector3(0,.25,homeDistance()),new THREE.Vector3(0,.20,0));};
     const closeDistance=()=>Math.max(1.45,.60/(Math.tan(THREE.MathUtils.degToRad(16))*camera.aspect));
-    api.current={reset,zoom:()=>{atHome=false;frame(new THREE.Vector3(0,.22,Math.max(2.4,homeDistance()*.72)),new THREE.Vector3(0,.15,.2));},menu:value=>{
+    api.current={reset,menu:value=>{
       focused=value;
       if(value){atHome=false;frame(new THREE.Vector3(FANTASY_SCREEN.x,FANTASY_SCREEN.y,closeDistance()),new THREE.Vector3(FANTASY_SCREEN.x,FANTASY_SCREEN.y,.235));}else reset();
     }};
@@ -168,7 +156,7 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
       e.preventDefault();e.stopPropagation();
       if(e.key==="Home")reset();else if(e.key==="Enter")actions.current.show("menu");else if(e.key==="ArrowUp"||e.key==="ArrowDown")actions.current.volume(physicalVolume.current+(e.key==="ArrowUp"?.025:-.025));else execute(e.key===" "?"power":e.key==="ArrowLeft"?"previous":e.key==="ArrowRight"?"next":"volume");
     };
-    renderer.domElement.tabIndex=0;renderer.domElement.setAttribute("aria-label","奥术收音机：空格播放，左右切台，上下音量，M 静音，Enter 菜单，Home 复位");
+    renderer.domElement.tabIndex=0;renderer.domElement.setAttribute("aria-label","魔兽世界 3D 收音机：空格播放，左右切台，上下音量，M 静音，Enter 菜单，Home 复位");
     renderer.domElement.addEventListener("pointerdown",down,true);renderer.domElement.addEventListener("pointermove",move);renderer.domElement.addEventListener("pointerup",up);renderer.domElement.addEventListener("pointercancel",cancel);renderer.domElement.addEventListener("lostpointercapture",cancel);renderer.domElement.addEventListener("pointerleave",leave);renderer.domElement.addEventListener("wheel",wheel,{passive:false,capture:true});renderer.domElement.addEventListener("keydown",keyboard);
     const resize=new ResizeObserver(()=>{const r=element.getBoundingClientRect();renderer.setSize(r.width,r.height);css.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();if(focused)api.current?.menu(true);else if(atHome)reset();});resize.observe(element);
     const motionPreference=matchMedia("(prefers-reduced-motion: reduce)");let lastFrame=0,lastText="";
@@ -199,7 +187,7 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
       speakerMotion=stepSpeakerMotion(speakerMotion,delta,player.isPlaying&&!player.isLoading&&!current.current.muted&&!document.hidden,player.volume,reduced);
       speakers?.([speakerExcursion(speakerMotion,0),speakerExcursion(speakerMotion,1)]);
       const note=player.error||(feedbackText.current.until>Date.now()?feedbackText.current.text:hover?labels[hover]:player.notice||(current.current.muted?"静音 · 按音量旋钮恢复":"轻触黑玻璃，打开菜单"));
-      const lines=[song?player.station?.name||"ARCANE RADIO":player.station?`${player.station.country} · LIVE RADIO`:"QIAOMU / ARCANE RADIO",song?.title||player.station?.name||"按蓝色宝石，开始收听",song?.artist||note,`${player.isLoading?"正在连接…":player.isPlaying?"● 正在直播":"Ⅱ 已暂停"}    ${current.current.muted?"静音":`音量 ${Math.round(player.volume*100)}%`}    ${player.liked?"♥ 已收藏":""}`];
+      const lines=[song?player.station?.name||"WORLD RADIO":player.station?`${player.station.country} · LIVE RADIO`:"QIAOMU / WORLD RADIO",song?.title||player.station?.name||"按蓝色宝石，开始收听",song?.artist||note,`${player.isLoading?"正在连接…":player.isPlaying?"● 正在直播":"Ⅱ 已暂停"}    ${current.current.muted?"静音":`音量 ${Math.round(player.volume*100)}%`}    ${player.liked?"♥ 已收藏":""}`];
       if(song&&(player.error||hover||feedbackText.current.until>Date.now()))lines[0]=note;
       const text=JSON.stringify(lines);if(text!==lastText){draw(lines);lastText=text;}
       if(display)display.visible=!focused;
@@ -210,21 +198,11 @@ function FantasyRadio({ player: p, screen, page, open, track }: Props) {
     return()=>{disposed=true;api.current=null;resize.disconnect();renderer.setAnimationLoop(null);controls.dispose();renderer.domElement.removeEventListener("pointerdown",down,true);renderer.domElement.removeEventListener("pointermove",move);renderer.domElement.removeEventListener("pointerup",up);renderer.domElement.removeEventListener("pointercancel",cancel);renderer.domElement.removeEventListener("lostpointercapture",cancel);renderer.domElement.removeEventListener("pointerleave",leave);renderer.domElement.removeEventListener("wheel",wheel,true);renderer.domElement.removeEventListener("keydown",keyboard);disposeTree(scene);texture.dispose();mask.dispose();environment.dispose();room.dispose();pmrem.dispose();renderer.dispose();renderer.domElement.remove();css.domElement.remove();};
   }, [screenElement]);
 
-  return <section className="rams-experience fantasy-experience" aria-label="奥术战歌 3D 收音机">
+  return <section className="rams-experience fantasy-experience" aria-label="魔兽世界 3D 收音机">
     <div className="rams-view" ref={host}/>
-    {!ready&&<div className="rams-loading" role="status">{failed?"模型无法载入，请使用简易控制。":"正在装配收音机…"}</div>}
-    <div className={`fantasy-tools ${awake?"is-awake":"is-asleep"}`}>
-      <button aria-label="正面视角" onClick={()=>{setPanel(false);open("now");api.current?.reset();}}><RotateCcw size={17}/></button>
-      <button aria-label="近景视角" disabled={panel} onClick={()=>api.current?.zoom()}><ZoomIn size={17}/></button>
-      <button aria-label="简易控制" aria-expanded={simple} onClick={()=>setSimple(!simple)}><SlidersHorizontal size={17}/></button>
-    </div>
-    {!failed&&createPortal(<div className="fantasy-menu" onKeyDown={e=>{if(e.key==="Escape"){e.stopPropagation();setPanel(false);open("now");}}}>{screen}<button className="fantasy-return" onClick={()=>{setPanel(false);open("now");}}>收起菜单 ↩</button></div>,screenElement)}
-    {(simple||failed)&&<div className="fantasy-simple" aria-label="简易播放器">
-      <strong>{track?.title||p.station?.name||"乔木电台"}</strong>
-      <div className="rams-controls"><button aria-label="上一家电台" onClick={p.onPrevious}><SkipBack size={19}/></button><button className="rams-power" aria-label={p.isPlaying?"暂停":"播放"} onClick={p.onToggle}>{p.isPlaying?<Pause size={20}/>:<Play size={20}/>}</button><button aria-label="下一家电台" onClick={p.onNext}><SkipForward size={19}/></button><button aria-label="搜索电台" onClick={()=>show("search")}><Search size={19}/></button><button aria-label="频道与电台" onClick={()=>show("menu")}><ListMusic size={19}/></button><button aria-label={p.liked?"取消喜欢":"喜欢这家电台"} disabled={!p.station} onClick={p.onLike}><Heart size={19} fill={p.liked?"currentColor":"none"}/></button></div>
-      <label>音量<input aria-label="音量" type="range" min="0" max="1" step=".01" value={p.volume} onChange={e=>volume(Number(e.target.value))}/><span>{Math.round(p.volume*100)}%</span></label>
-      {failed&&screen}
-    </div>}
+    {!ready&&!failed&&<ModelLoader fantasy progress={progress}/>}
+    {failed&&<div className="fantasy-glass fantasy-flat-screen">{screen}</div>}
+    {!failed&&createPortal(<div className="fantasy-menu" onKeyDown={e=>{if(e.key==="Escape"){e.stopPropagation();setPanel(false);open("now");api.current?.reset();}}}>{screen}</div>,screenElement)}
     <span className="native-sr" role="status">{p.error||`${p.isPlaying?"正在播放":"已暂停"} ${track?.title||p.station?.name||""} · ${muted?"静音":`音量 ${Math.round(p.volume*100)}%`}${p.liked?" · 已收藏":""}`}</span>
   </section>;
 }

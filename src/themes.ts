@@ -13,7 +13,7 @@ export type RadioTheme = {
 export const RADIO_THEMES: RadioTheme[] = [
   {
     id: "fantasy",
-    label: "奥术战歌 · 3D",
+    label: "魔兽世界 3D",
     family: "奇幻实体播放器",
     note: "魔法屏幕与可操作按键",
     mood: "energy",
@@ -22,7 +22,7 @@ export const RADIO_THEMES: RadioTheme[] = [
   },
   {
     id: "rams",
-    label: "Rams · 3D",
+    label: "博朗 · 3D",
     family: "立体收音机",
     note: "实体旋钮与实时屏幕",
     mood: "focus",
@@ -77,7 +77,7 @@ export const RADIO_THEMES: RadioTheme[] = [
 ];
 
 export function getTheme(themeId: ThemeId) {
-  return RADIO_THEMES.find((theme) => theme.id === themeId) || RADIO_THEMES.find((theme) => theme.id === "editorial")!;
+  return RADIO_THEMES.find((theme) => theme.id === themeId) || RADIO_THEMES.find((theme) => theme.id === "rams")!;
 }
 
 export function themeQuery(themeId: ThemeId) {

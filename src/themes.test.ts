@@ -15,7 +15,9 @@ describe("radio themes", () => {
     expect(themeQuery("fantasy")).toEqual({ mood: "energy", source: "radio-browser" });
   });
 
-  it("falls back to the editorial theme for an unknown persisted value", () => {
-    expect(getTheme("missing" as never).id).toBe("editorial");
+  it("falls back to the default Braun 3D theme for an unknown persisted value", () => {
+    expect(getTheme("missing" as never).id).toBe("rams");
+    expect(getTheme("rams").label).toBe("博朗 · 3D");
+    expect(getTheme("fantasy").label).toBe("魔兽世界 3D");
   });
 });

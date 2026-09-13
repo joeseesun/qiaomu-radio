@@ -2,9 +2,9 @@
 
 [中文](#中文) · [English](#english) · [在线体验](https://radio.qiaomu.ai/)
 
-![乔木电台奥术战歌主题设计概念图](public/og-radio.png)
+![乔木电台魔兽世界 3D 主题设计概念图](public/og-radio.png)
 
-> 奥术战歌主题的设计概念图；可操作的 3D 模型与实时屏幕请以[线上页面](https://radio.qiaomu.ai/?theme=fantasy)为准。
+> 魔兽世界 3D 主题的设计概念图；可操作的 3D 模型与实时屏幕请以[线上页面](https://radio.qiaomu.ai/?theme=fantasy)为准。
 
 ## 中文
 
@@ -12,7 +12,7 @@
 
 ### 特性
 
-- 七种完整播放器：奥术战歌 3D、Rams 3D、极简、iPod、Winamp、foobar2000 和经典收音机。
+- 七种完整播放器：魔兽世界 3D、博朗 3D、极简、iPod、Winamp、foobar2000 和经典收音机。
 - 实体交互：播放/暂停、上一家、下一家、收藏与音量都能直接操作；3D 旋钮、按钮和机身旋转有真实反馈。
 - 全球发现：基于 Radio Browser 搜索和心情频道，同时提供经过人工核验的中国公开直播源。
 - 诚实元数据：SomaFM 显示官方实时曲目；没有可靠曲目信息时明确显示“电台直播”。
@@ -44,7 +44,7 @@ NODE_ENV=production PORT=4173 npm start
 ### 架构与设计
 
 - React + TypeScript + Vite
-- Three.js 参数化 Rams 机身与 Hyper3D Rodin Gen-2.5 奥术战歌模型
+- Three.js 参数化博朗风格机身与 Hyper3D Rodin Gen-2.5 魔兽世界 3D 模型
 - Express 服务端代理 Radio Browser 与实时曲目信息
 - hls.js 兼容 Chrome/Edge，Safari 优先使用原生 HLS
 - Umami 无 Cookie 流量统计，仅在生产域名 `radio.qiaomu.ai` 上记数
@@ -55,7 +55,7 @@ NODE_ENV=production PORT=4173 npm start
 
 电台目录来自 [Radio Browser](https://www.radio-browser.info/)，音频流由各广播机构直接提供。中国波段使用项目内审核白名单，不在运行时抓取商业聚合站或第三方播放列表。本站不创建账号，也不上传本地口味数据。
 
-iPod、Winamp、foobar2000 等名称仅描述复古交互主题；本项目与相关品牌没有关联。奥术战歌为原创奇幻方向，不使用《魔兽世界》的商标、角色或受版权保护素材。
+iPod、Winamp、foobar2000、博朗与魔兽世界等名称仅用于描述交互与视觉主题；本项目与相关品牌、暴雪娱乐没有关联，不使用官方标识、角色或故事素材。
 
 ### 许可与支持
 

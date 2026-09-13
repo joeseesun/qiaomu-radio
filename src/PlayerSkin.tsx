@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ClassicPlayer } from "./ClassicPlayer";
 import { useNowPlaying } from "./useNowPlaying";
-import { ChevronLeft, ChevronRight, Heart, History, ListMusic, Pause, Play, Search, SkipBack, SkipForward, ThumbsDown, Volume2, Radio, Info, LoaderCircle, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, History, ListMusic, Pause, Play, Search, SkipBack, SkipForward, ThumbsDown, Volume2, Radio, Info, LoaderCircle, ExternalLink, ZoomOut } from "lucide-react";
 import type { MoodId, Station, StationSource, TasteProfile, ThemeId } from "./types";
 import { SupportPanel } from "./SupportPanel";
+import { ModelLoader } from "./ModelLoader";
 
 type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support";
 export type PlayerProps = {
@@ -35,7 +36,8 @@ export type PlayerProps = {
 
 const TITLES: Record<Page, string> = { now: "正在播放", menu: "乔木电台", channels: "频道", stations: "电台列表", favorites: "喜欢的电台", history: "最近收听", search: "搜索电台", info: "关于电台", support: "支持与关注" };
 
-const RamsRadio = lazy(() => import("./RamsRadio"));
+const NativeRadio = lazy(() => import("./NativeRadio"));
+const FantasyRadio = lazy(() => import("./RamsRadio"));
 
 export function PlayerSkin(props: PlayerProps) {
   const { theme, station, isPlaying, isLoading, volume, liked } = props;
@@ -47,7 +49,7 @@ export function PlayerSkin(props: PlayerProps) {
   const pocket = theme === "pocket";
   const deck = theme === "deck";
   const consoleSkin = theme === "console";
-  const label = pocket ? "iPod 播放器" : deck ? "Winamp 播放器" : consoleSkin ? "foobar2000 播放器" : theme === "fantasy" ? "奥术战歌 3D 收音机" : theme === "china" ? "收音机" : "乔木播放器";
+  const label = pocket ? "iPod 播放器" : deck ? "Winamp 播放器" : consoleSkin ? "foobar2000 播放器" : theme === "fantasy" ? "魔兽世界 3D 收音机" : theme === "rams" ? "博朗 3D 收音机" : theme === "china" ? "收音机" : "乔木播放器";
   const status = isLoading ? "连接中…" : isPlaying ? "正在直播" : "已暂停";
 
   const open = (next: Page) => { setPage(next); setSelected(0); };
@@ -106,7 +108,7 @@ export function PlayerSkin(props: PlayerProps) {
       if (event.key === "Escape") { event.preventDefault(); back(); }
     }}>
       <div className="screen-title">
-        <button aria-label={page === "now" ? "打开菜单" : "返回菜单"} onClick={back}>{page !== "now" && <ChevronLeft size={15} />}<span>{TITLES[page]}</span>{page === "now" && <ChevronRight size={15} />}</button>
+        <button aria-label={theme === "fantasy" && page !== "now" ? "恢复原始视角" : page === "now" ? "打开菜单" : "返回菜单"} onClick={theme === "fantasy" && page !== "now" ? () => open("now") : back}>{page !== "now" && (theme === "fantasy" ? <ZoomOut size={15} /> : <ChevronLeft size={15} />)}<span>{TITLES[page]}</span>{page === "now" && <ChevronRight size={15} />}</button>
         <span aria-label={status}>{isLoading ? <LoaderCircle size={15} className="spinner" /> : isPlaying ? <Play size={14} fill="currentColor" /> : <Pause size={14} fill="currentColor" />}</span>
       </div>
       <div className="screen-content">
@@ -151,7 +153,8 @@ export function PlayerSkin(props: PlayerProps) {
   );
 
   if (deck || consoleSkin) return <ClassicPlayer player={props} screen={screen} page={page} open={open} track={track} />;
-  if (theme === "rams" || theme === "fantasy") return <Suspense fallback={<div role="status">正在打开 3D 收音机…</div>}><RamsRadio variant={theme} player={props} screen={screen} page={page} open={open} track={track} /></Suspense>;
+  if (theme === "rams") return <Suspense fallback={<ModelLoader />}><NativeRadio player={props} track={track} /></Suspense>;
+  if (theme === "fantasy") return <Suspense fallback={<ModelLoader fantasy />}><FantasyRadio player={props} screen={screen} page={page} open={open} track={track} /></Suspense>;
 
   return (
     <section className={`radio-device device-${theme}`} aria-label={label}>
