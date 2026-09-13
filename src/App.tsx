@@ -58,6 +58,7 @@ export function App() {
   const playbackRunRef = useRef(0);
   const catalogRunRef = useRef(0);
   const cancelPlaybackRef = useRef<(() => void) | null>(null);
+  const confirmPlaybackRef = useRef<(() => void) | null>(null);
   const recoverRef = useRef<() => void>(() => {});
   const startingRef = useRef(false);
   const failoverRef = useRef<{ candidates: Station[]; index: number } | null>(null);
@@ -130,19 +131,32 @@ export function App() {
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
+      let confirmPlayback!: () => void;
       const finish = (reason?: Error) => {
         if (settled) return;
         settled = true;
+        if (confirmPlaybackRef.current === confirmPlayback) confirmPlaybackRef.current = null;
         window.clearTimeout(timeout);
         audio.removeEventListener("playing", onPlaying);
+        audio.removeEventListener("canplay", onPlayable);
+        audio.removeEventListener("timeupdate", onPlayable);
         audio.removeEventListener("error", onAudioError);
         if (reason) reject(reason); else resolve();
       };
       const onPlaying = () => finish();
+      const onPlayable = () => { if (!audio.paused && audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) finish(); };
       const onAudioError = () => finish(new Error("直播流无法解码或已经离线。"));
+      confirmPlayback = () => finish();
+      confirmPlaybackRef.current = confirmPlayback;
+      const play = () => audio.play().then(
+        () => finish(),
+        (reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。")),
+      );
       const timeout = window.setTimeout(() => finish(new Error("连接直播超过 15 秒。")), 15_000);
       cancelPlaybackRef.current = () => finish(new DOMException("Playback cancelled", "AbortError"));
       audio.addEventListener("playing", onPlaying, { once: true });
+      audio.addEventListener("canplay", onPlayable);
+      audio.addEventListener("timeupdate", onPlayable);
       audio.addEventListener("error", onAudioError, { once: true });
 
       if (HlsRuntime?.isSupported()) {
@@ -156,12 +170,12 @@ export function App() {
           if (recoveryAttempts < 2 && data.type === HlsRuntime.ErrorTypes.MEDIA_ERROR) { recoveryAttempts += 1; hls.recoverMediaError(); return; }
           recoverRef.current();
         });
-        hls.on(HlsRuntime.Events.MANIFEST_PARSED, () => { audio.play().catch((reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。"))); });
+        hls.on(HlsRuntime.Events.MANIFEST_PARSED, play);
         hls.loadSource(url);
         hls.attachMedia(audio);
       } else {
         audio.src = url;
-        audio.play().catch((reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。")));
+        void play();
       }
     });
   }, [volume]);
@@ -414,7 +428,7 @@ export function App() {
           onRetry={retryCurrentSeries}
         />
       </div>
-      <audio ref={audioRef} preload="auto" playsInline onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }} onCanPlay={() => setIsBuffering(false)} onWaiting={() => { if (!startingRef.current) setIsBuffering(true); }} onStalled={() => { if (!startingRef.current) setIsBuffering(true); }} onPause={() => setIsPlaying(false)} onError={recoverPlayback} />
+      <audio ref={audioRef} preload="auto" playsInline onPlaying={() => { confirmPlaybackRef.current?.(); setIsPlaying(true); setIsBuffering(false); }} onCanPlay={() => setIsBuffering(false)} onTimeUpdate={() => { const audio = audioRef.current; if (audio && !audio.paused && audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) { confirmPlaybackRef.current?.(); setIsBuffering(false); } }} onWaiting={() => { if (!startingRef.current) setIsBuffering(true); }} onStalled={() => { if (!startingRef.current) setIsBuffering(true); }} onPause={() => setIsPlaying(false)} onError={recoverPlayback} />
     </main>
   );
 }
