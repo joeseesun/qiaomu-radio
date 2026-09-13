@@ -180,6 +180,7 @@ export function App() {
       if (catalogRun !== catalogRunRef.current) return [];
       if (!response.ok) throw new Error(data.error || "无法获取电台。");
       const nextStations = data.stations as Station[];
+      if (data.warning) setNotice(String(data.warning));
       setStations(nextStations); setFailedIds([]);
       setIsLoading(false);
       if (!nextStations.length) setError("没有找到合适的直播电台，试试更宽泛的关键词。");
