@@ -51,7 +51,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     {id:"like",label:p.liked?t("action.unfavoriteCurrent"):t("action.favoriteCurrent"),action:()=>{if(p.station)p.onLike();}},
     {id:"dislike",label:t("action.dislike"),action:()=>{if(p.station)p.onDislike();go("now");}},
     {id:"explore",label:t("action.explore"),action:()=>go("explore")},
-  ] : menu === "channels" ? [...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:t("search.china"),action:()=>{p.onChina();go("now");}}] : menu === "language" ? LOCALES.map(item=>({id:item,label:`${item===locale?"✓ ":""}${LOCALE_LABELS[item]}`,action:()=>{setLocale(item);go("menu");}})) : menu === "explore" ? [
+  ] : menu === "channels" ? [{id:"global",label:t("search.global"),action:()=>{p.onGlobal();go("now");}},...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:t("search.china"),action:()=>{p.onChina();go("now");}}] : menu === "language" ? LOCALES.map(item=>({id:item,label:`${item===locale?"✓ ":""}${LOCALE_LABELS[item]}`,action:()=>{setLocale(item);go("menu");}})) : menu === "explore" ? [
     {id:"explode",label:exploded?t("action.collapse"):t("action.explode"),action:()=>{const next=!exploded;setExploded(next);view.current?.explode(next);}},
     {id:"reset",label:t("action.restore"),action:()=>{setExploded(false);view.current?.reset();go("now");}},
     {id:"back",label:t("action.back"),action:()=>go("menu")},

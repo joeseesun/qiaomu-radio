@@ -8,16 +8,17 @@
 
 ## 中文
 
-乔木电台是一台真正能操作的 3D 网络收音机。它把全球直播电台、轻量的本地推荐和七种完整播放器主题装进同一个安静界面：进入页面先听广播，需要搜索、收藏、历史或支持作者时，再从设备菜单进入。
+乔木电台是一台真正能操作的 3D 网络收音机。它把全球直播电台、轻量的本地推荐和六种完整播放器主题装进同一个安静界面：进入页面先听广播，需要搜索、收藏、历史或支持作者时，再从设备菜单进入。
 
 ### 特性
 
-- 七种完整播放器：魔兽世界 3D、博朗 3D、极简、iPod、Winamp、foobar2000 和经典收音机。
+- 六种完整播放器：魔兽世界 3D、博朗 3D、极简、iPod、Winamp 和 foobar2000。
 - 实体交互：播放/暂停、上一家、下一家、收藏与音量都能直接操作；3D 旋钮、按钮和机身旋转有真实反馈。
-- 全球发现：基于 Radio Browser 搜索和心情频道，同时提供经过人工核验的中国公开直播源。
+- 全球发现：所有主题的机内频道都提供“全球精选 20”、心情频道和经过人工核验的中国公开直播源。
 - 地区首播：首次访问按 IP 国家选择当地高票音乐电台；定位失败时回退跨地区的全球热门 20 台。
 - 连续播放：HLS 使用更深的滚动缓冲、分片重试和受控的同源内存预取，短暂网络波动不立即换台。
 - 六种界面语言：简体中文、英语、西班牙语、法语、德语、日语；电台名称保持广播机构原文。
+- 系统媒体控制：支持锁屏、键盘和系统播放面板的播放、暂停、上一台和下一台。
 - 诚实元数据：SomaFM 显示官方实时曲目；没有可靠曲目信息时明确显示“电台直播”。
 - 本地口味：喜欢、跳过、标签权重和历史只保存在当前浏览器。
 - 优雅降级：流媒体连接失败会解释原因并自动尝试下一家。
@@ -71,15 +72,17 @@ iPod、Winamp、foobar2000、博朗与魔兽世界等名称仅用于描述交互
 
 ## English
 
-Qiaomu Radio is an operable 3D internet radio for discovering live stations around the world. Seven self-contained player themes place playback, discovery, favorites, history, and volume controls inside the device itself, keeping the landing experience focused on listening.
+Qiaomu Radio is an operable 3D internet radio for discovering live stations around the world. Six self-contained player themes place playback, discovery, favorites, history, and volume controls inside the device itself, keeping the landing experience focused on listening.
 
 ### Highlights
 
-- Seven complete player environments, including two interactive 3D radios.
+- Six complete player environments, including two interactive 3D radios.
+- Global Picks 20 is available from the Channels menu in every theme.
 - Live global discovery via Radio Browser plus a reviewed set of public Chinese broadcaster streams.
 - Country-aware first-run stations with a global top-20 music fallback when IP country lookup fails.
 - Resilient HLS playback with rolling buffers, retry recovery, and short-lived in-memory segment prefetching for reviewed streams.
 - Six UI languages: Simplified Chinese, English, Spanish, French, German, and Japanese.
+- Media Session metadata and play/pause/previous/next handlers for supported system controls.
 - Local-only taste signals: likes, skips, tag weights, and listening history stay in your browser.
 - Honest metadata and graceful stream fallback.
 - A clean landing screen; analytics disclosure, donation, and follow links live inside the device menu.

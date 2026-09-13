@@ -9,6 +9,7 @@ describe("radio interface languages", () => {
   });
   it("translates core controls and country names", () => {
     for (const locale of LOCALES) expect(message(locale, "action.play")).not.toBe("");
+    for (const locale of LOCALES) expect(message(locale, "search.global")).toMatch(/20/);
     expect(regionName("de", "JP", "Japan")).toMatch(/Japan/i);
   });
 });
