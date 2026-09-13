@@ -3,7 +3,8 @@ import * as THREE from "three";
 import { createRadioModel, RADIO_FLOOR, RADIO_SCREEN } from "./radioModel";
 
 describe("self-contained parametric radio", () => {
-  const { device, parts, knobs } = createRadioModel();
+  const radio = createRadioModel();
+  const { device, parts, knobs } = radio;
   afterAll(() => device.traverse(object => {
     if (object instanceof THREE.Mesh) {
       object.geometry.dispose();
@@ -53,5 +54,10 @@ describe("self-contained parametric radio", () => {
     expect(scale.rotation.z).toBe(0);
     knobs.volume.rotation.z = 0;
     expect(device.getObjectByName("front-gasket")).toBeUndefined();
+  });
+  it("keeps the speaker assembly as fixed hardware instead of a playback control", () => {
+    const backing = device.getObjectByName("speaker-backing")!;
+    expect(backing.userData.action).toBeUndefined();
+    expect(radio).not.toHaveProperty("speaker");
   });
 });

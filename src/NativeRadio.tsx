@@ -11,7 +11,6 @@ import { clampVolume, clockwiseArc, detents, TUNING_DETENT, turnVolume, volumeAn
 import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPressFeedback";
 import { SupportPanel } from "./SupportPanel";
 import { ZoomOut } from "lucide-react";
-import { speakerExcursion, stepSpeakerMotion } from "./fantasySpeakerMotion";
 
 type Menu = "now" | "menu" | "stations" | "channels" | "favorites" | "history" | "search" | "support" | "explore";
 type Row = { id: string; label: string; action: () => void };
@@ -93,7 +92,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.toneMapping=THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure=.95; renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.VSMShadowMap;
     element.appendChild(renderer.domElement);
-    const scene=new THREE.Scene(), {device,parts,knobs,speaker}=createRadioModel(); scene.add(device);
+    const scene=new THREE.Scene(), {device,parts,knobs}=createRadioModel(); scene.add(device);
     const camera=new THREE.PerspectiveCamera(32,1,.02,40);
     let atHome=true;
     const homeDistance=()=>Math.max(2.72,1.05/(Math.tan(THREE.MathUtils.degToRad(16))*camera.aspect));
@@ -212,14 +211,11 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     renderer.domElement.addEventListener("pointerdown",down,true);renderer.domElement.addEventListener("pointermove",move,true);renderer.domElement.addEventListener("pointerup",up,true);renderer.domElement.addEventListener("pointercancel",cancel,true);renderer.domElement.addEventListener("lostpointercapture",cancel,true);renderer.domElement.addEventListener("wheel",wheel,{passive:false,capture:true});
     const resize=new ResizeObserver(()=>{const r=element.getBoundingClientRect();renderer.setSize(r.width,r.height);css.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();if(atHome){camera.position.set(.34,.22,homeDistance());controls.target.set(0,0,0);controls.update();}});resize.observe(element);
     let previousFrame=performance.now();
-    let speakerMotion={level:0,phase:0};
     renderer.setAnimationLoop(time=>{
       const speed=reduced?1:.18,delta=Math.min(Math.max((time-previousFrame)/1000,0),.05);previousFrame=time;controls.update();
       expansion+=(expansionGoal-expansion)*speed;
       for(const action of ["power","tune","volume"]){pressMotion[action]=stepPressMotion(pressMotion[action],gesture?.action===action,delta,reduced);}
       for(const part of parts){part.mesh.position.copy(part.origin).addScaledVector(part.offset,expansion);for(const action of ["power","tune","volume"]){if(part.mesh===knobs[action])part.mesh.position.z-=pressMotion[action].depth;}}
-      speakerMotion=stepSpeakerMotion(speakerMotion,delta,current.current.p.isPlaying&&!current.current.p.isLoading&&current.current.p.volume>0&&!document.hidden,current.current.p.volume,reduced);
-      speaker.position.z+=speakerExcursion(speakerMotion,0);
       const powerMaterial=knobs.power.material as THREE.MeshStandardMaterial;
       powerMaterial.emissive.setHex(0x7a2c08);powerMaterial.emissiveIntensity=current.current.p.isPlaying?.16:pressMotion.power.pulse*.12;
       device.position.y=0;device.updateMatrixWorld(true);bounds.setFromObject(device);
