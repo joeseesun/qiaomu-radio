@@ -25,4 +25,14 @@ export type TasteProfile = {
   dislikedStationIds: string[];
   tagWeights: Record<string, number>;
   history: Array<{ station: Station; listenedAt: string }>;
+  stationReliability: Record<string, StationReliability>;
+  preferredCountryCode: string | null;
+};
+
+export type StationReliability = {
+  successes: number;
+  failures: number;
+  consecutiveFailures: number;
+  lastSuccessAt?: string;
+  lastFailureAt?: string;
 };

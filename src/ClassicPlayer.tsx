@@ -4,7 +4,7 @@ import type { PlayerProps } from "./PlayerSkin";
 import type { NowPlaying } from "./useNowPlaying";
 import { regionName, useI18n } from "./i18n";
 
-type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info") => void; track: NowPlaying | null };
+type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: "now" | "menu" | "channels" | "regions" | "stations" | "favorites" | "history" | "search" | "info") => void; track: NowPlaying | null };
 export function ClassicPlayer({ player: p, screen, page, open, track }: Props) {
   const { locale, t } = useI18n();
   const amp = p.theme === "deck";

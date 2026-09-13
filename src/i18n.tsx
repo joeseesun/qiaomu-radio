@@ -7,13 +7,13 @@ const KEY = "qiaomu-radio-locale-v1";
 
 const zh = {
   "theme.switch":"切换主题","theme.menu":"播放器主题","theme.fantasy":"魔兽世界 3D","theme.rams":"博朗 · 3D","theme.editorial":"极简","theme.pocket":"iPod","theme.deck":"Winamp","theme.console":"foobar2000",
-  "page.now":"正在播放","page.menu":"乔木电台","page.channels":"频道","page.stations":"电台列表","page.favorites":"喜欢的电台","page.history":"最近收听","page.search":"搜索电台","page.info":"关于电台","page.support":"支持与关注","page.language":"语言",
+  "page.now":"正在播放","page.menu":"乔木电台","page.channels":"频道","page.regions":"地区电台","page.stations":"电台列表","page.favorites":"喜欢的电台","page.history":"最近收听","page.search":"搜索电台","page.info":"关于电台","page.support":"支持与关注","page.language":"语言",
   "status.connecting":"连接中…","status.live":"正在直播","status.paused":"已暂停","now.title":"此刻，听点什么","now.prompt":"按播放，遇见下一段声音。","live.radio":"电台直播",
   "search.name":"电台名称","search.submit":"提交搜索","search.current":"搜索当前电台来源","search.china":"中国电台","search.global":"全球精选 20",
   "info.text":"全球电台来自 Radio Browser，中国电台使用精选公开直播源。喜欢与收听记录保存在本机。","info.website":"电台官网",
   "empty.stations":"还没有电台，去频道里选一种心情。","empty.favorites":"按下爱心，把喜欢的声音留在这里。","empty.history":"开始收听后，电台会留在这里。","empty.loading":"正在寻找电台…",
   "action.like":"喜欢","action.unlike":"取消喜欢","action.dislike":"不喜欢并换台","action.list":"电台列表","action.retry":"重试","action.volume":"音量","action.previous":"上一家电台","action.next":"下一家电台","action.play":"播放","action.pause":"暂停","action.stop":"停止","action.menu":"打开菜单","action.back":"返回菜单","action.restore":"恢复原始视角","action.select":"选择当前菜单项","action.about":"关于播放器","action.explore":"探索机身","action.explode":"拆解展示","action.collapse":"合上机身","action.favoriteCurrent":"收藏当前电台","action.unfavoriteCurrent":"取消收藏当前电台","language.choose":"选择界面语言",
-  "label.region":"地区","label.format":"格式","label.station":"电台","status.stopped":"已停止播放","status.broadcast":"直播",
+  "label.region":"地区","label.format":"格式","label.station":"电台","region.auto":"自动判断地区","status.stopped":"已停止播放","status.broadcast":"直播",
   "mood.unwind":"松一口气","mood.focus":"安静做事","mood.jazz":"爵士时刻","mood.classical":"古典留白","mood.energy":"需要能量","mood.world":"去远方",
   "support.title":"支持乔木电台","support.text":"喜欢这台收音机，可以请乔木喝杯咖啡，或关注后续更新。","support.reward":"打赏支持","support.follow":"关注乔木","support.source":"项目源码","support.recommend":"乔木推荐","support.close":"关闭","support.followTitle":"关注向阳乔木","support.thanks":"感谢支持乔木继续做有趣、可用的产品。","support.wechat":"微信公众号：向阳乔木推荐看",
 } as const;
@@ -51,6 +51,14 @@ const globalPickLabels: Record<Locale, string> = {
   "zh-CN": "全球精选 20", en: "Global Picks 20", es: "20 selecciones globales",
   fr: "20 sélections mondiales", de: "20 globale Empfehlungen", ja: "世界のおすすめ 20 局",
 };
+const regionPageLabels: Record<Locale, string> = {
+  "zh-CN": "地区电台", en: "Stations by region", es: "Emisoras por región",
+  fr: "Stations par région", de: "Sender nach Region", ja: "地域別の放送局",
+};
+const regionAutoLabels: Record<Locale, string> = {
+  "zh-CN": "自动判断地区", en: "Detect my region", es: "Detectar mi región",
+  fr: "Détecter ma région", de: "Region automatisch erkennen", ja: "地域を自動判定",
+};
 export function detectLocale(languages: readonly string[] = navigator.languages) {
   for (const language of languages) {
     const normalized = language.toLowerCase();
@@ -61,6 +69,8 @@ export function detectLocale(languages: readonly string[] = navigator.languages)
 }
 export function message(locale: Locale, key: MessageKey) {
   if (key === "search.global") return globalPickLabels[locale];
+  if (key === "page.regions") return regionPageLabels[locale];
+  if (key === "region.auto") return regionAutoLabels[locale];
   return messages[locale][key] || en[key] || zh[key];
 }
 export function regionName(locale: Locale, code: string, fallback: string) {

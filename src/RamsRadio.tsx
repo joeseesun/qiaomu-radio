@@ -15,7 +15,7 @@ import { clockwiseArc, clampVolume, turnVolume } from "./radioGestures";
 import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, FANTASY_SPEAKERS, normalizeFantasyModel, surfacePatch, surfacePoint, type FantasyAction } from "./fantasySurface";
 import { regionName, useI18n } from "./i18n";
 
-type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
+type Page = "now" | "menu" | "channels" | "regions" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
 type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: Page) => void; track: NowPlaying | null };
 type SceneApi = { reset: () => void; menu: (open: boolean) => void };
 
@@ -78,7 +78,7 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
     const glow=maskContext.createRadialGradient(64,64,25,64,64,64);glow.addColorStop(0,"white");glow.addColorStop(1,"black");maskContext.fillStyle=glow;maskContext.fillRect(0,0,128,128);
     const mask=new THREE.CanvasTexture(maskCanvas);
     const disposeTree=(object:THREE.Object3D)=>object.traverse(child=>{if(child instanceof THREE.Mesh){child.geometry.dispose();for(const m of Array.isArray(child.material)?child.material:[child.material]){Object.values(m).forEach(v=>{if(v instanceof THREE.Texture)v.dispose();});m.dispose();}}});
-    new GLTFLoader().load("/models/qiaomu-fantasy-radio-hyper3d-v1.glb", gltf=>{
+    new GLTFLoader().load("/models/qiaomu-fantasy-radio-hyper3d-v2.glb", gltf=>{
       if(disposed){disposeTree(gltf.scene);return;}
       try {
         model=gltf.scene; device.add(model); normalizeFantasyModel(model);

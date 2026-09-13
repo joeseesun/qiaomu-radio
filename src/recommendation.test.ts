@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applyFeedback, EMPTY_PROFILE, rankStations, stationScore } from "./recommendation";
+import { applyFeedback, EMPTY_PROFILE, rankStations, recordStationOutcome, stationScore } from "./recommendation";
 import type { Station } from "./types";
 
 const station = (id: string, tags: string[], streamUrl = "https://example.com/radio.mp3"): Station => ({
@@ -36,5 +36,21 @@ describe("taste recommendation", () => {
       stationScore(station("plain", [], "http://example.com/a"), EMPTY_PROFILE),
     );
     vi.restoreAllMocks();
+  });
+
+  it("temporarily demotes repeatedly failing stations", () => {
+    const now = new Date("2026-09-13T10:00:00Z");
+    const once = recordStationOutcome(EMPTY_PROFILE, "unstable", "failure", now);
+    const twice = recordStationOutcome(once, "unstable", "failure", now);
+    expect(stationScore(station("stable", []), twice, 0, now.getTime())).toBeGreaterThan(
+      stationScore(station("unstable", []), twice, 0, now.getTime()),
+    );
+  });
+
+  it("restores a station after successful playback", () => {
+    const failed = recordStationOutcome(EMPTY_PROFILE, "radio", "failure");
+    const recovered = recordStationOutcome(failed, "radio", "success");
+    expect(recovered.stationReliability.radio.consecutiveFailures).toBe(0);
+    expect(recovered.stationReliability.radio.successes).toBe(1);
   });
 });

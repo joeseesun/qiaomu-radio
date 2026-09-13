@@ -144,7 +144,10 @@ const CHINA_STATIONS = [
 const cache = new Map();
 const playCache = new Map();
 const regionCache = new Map();
+const regionalStationCache = new Map();
 const hlsSessions = new Map();
+const REGIONAL_CACHE_FRESH_MS = 15 * 60 * 1000;
+const REGIONAL_CACHE_STALE_MS = 24 * 60 * 60 * 1000;
 
 function cleanStation(station) {
   return {
@@ -215,16 +218,27 @@ async function globalPopularStations() {
 }
 
 async function regionalStations(request) {
-  const code = await requestCountry(request);
-  if (!code) return { stations: await globalPopularStations(), countryCode: null, source: "global-fallback" };
-  if (code === "CN") return { stations: CHINA_STATIONS, countryCode: code, source: "china-curated" };
+  const code = countryCode(request.query.country) || await requestCountry(request);
+  if (!code) return { stations: await globalPopularStations(), countryCode: null, source: "global-fallback", cached: true };
+  if (code === "CN") return { stations: CHINA_STATIONS, countryCode: code, source: "china-curated", cached: true };
+  const cached = regionalStationCache.get(code);
+  if (cached && Date.now() - cached.at < REGIONAL_CACHE_FRESH_MS) {
+    return { stations: cached.stations, countryCode: code, source: "regional", cached: true };
+  }
   try {
     const params = new URLSearchParams({ countrycode: code, hidebroken: "true", limit: "80", order: "votes", reverse: "true" });
     const raw = await radioFetch(`/json/stations/search?${params}`);
     const music = selectPopularMusic(raw, 20).map(cleanStation);
-    if (music.length >= 5) return { stations: music, countryCode: code, source: "regional" };
+    if (music.length >= 5) {
+      regionalStationCache.set(code, { at: Date.now(), stations: music });
+      if (regionalStationCache.size > 80) regionalStationCache.delete(regionalStationCache.keys().next().value);
+      return { stations: music, countryCode: code, source: "regional", cached: false };
+    }
   } catch { /* fall through to global list */ }
-  return { stations: await globalPopularStations(), countryCode: code, source: "global-fallback" };
+  if (cached && Date.now() - cached.at < REGIONAL_CACHE_STALE_MS) {
+    return { stations: cached.stations, countryCode: code, source: "regional-stale", cached: true, warning: "地区目录暂时波动，已继续使用最近成功的电台列表。" };
+  }
+  return { stations: await globalPopularStations(), countryCode: code, source: "global-fallback", cached: true };
 }
 
 app.get("/api/stations", async (request, response) => {
@@ -236,7 +250,7 @@ app.get("/api/stations", async (request, response) => {
   }
   if (source === "regional") {
     const regional = await regionalStations(request);
-    return response.json({ ...regional, cached: regional.source === "global-fallback" });
+    return response.json(regional);
   }
   if (source === "china-curated") {
     const normalizedQuery = query.toLowerCase();
@@ -384,7 +398,7 @@ app.get("/api/hls/:stationId/:resource", async (request, response) => {
 });
 
 app.get("/api/health", (_request, response) => {
-  response.json({ ok: true, sources: ["Radio Browser", "China curated broadcaster streams", "Global curated music fallback"], cacheEntries: cache.size, playCacheEntries: playCache.size, chinaStations: CHINA_STATIONS.length, globalFallbackStations: GLOBAL_CURATED_STATIONS.length });
+  response.json({ ok: true, sources: ["Radio Browser", "China curated broadcaster streams", "Global curated music fallback"], cacheEntries: cache.size, regionalCacheEntries: regionalStationCache.size, playCacheEntries: playCache.size, chinaStations: CHINA_STATIONS.length, globalFallbackStations: GLOBAL_CURATED_STATIONS.length });
 });
 
 const songCache = new Map();
@@ -414,7 +428,8 @@ if (isDev) {
 } else {
   app.use(express.static(path.join(root, "dist"), {
     setHeaders(response, filePath) {
-      if (/\.(?:glb|png|webp)$/i.test(filePath)) response.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      if (/[\\/]models[\\/].*-v\d+\.glb$/i.test(filePath)) response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      else if (/\.(?:glb|png|webp)$/i.test(filePath)) response.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
     },
   }));
   app.use((_request, response) => response.sendFile(path.join(root, "dist", "index.html")));

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Hls from "hls.js";
 import { PlayerSkin } from "./PlayerSkin";
-import { applyFeedback, EMPTY_PROFILE, rankStations } from "./recommendation";
+import { applyFeedback, EMPTY_PROFILE, rankStations, recordStationOutcome } from "./recommendation";
 import { getTheme } from "./themes";
 import { ThemePicker } from "./ThemePicker";
 import type { MoodId, Station, StationSource, TasteProfile, ThemeId } from "./types";
@@ -24,7 +24,14 @@ const MAX_AUTOPLAY_ATTEMPTS = 5;
 function loadProfile(): TasteProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...EMPTY_PROFILE, ...JSON.parse(raw) } : EMPTY_PROFILE;
+    if (!raw) return EMPTY_PROFILE;
+    const parsed = JSON.parse(raw);
+    return {
+      ...EMPTY_PROFILE,
+      ...parsed,
+      stationReliability: parsed.stationReliability || {},
+      preferredCountryCode: /^[A-Z]{2}$/.test(parsed.preferredCountryCode || "") ? parsed.preferredCountryCode : null,
+    };
   } catch { return EMPTY_PROFILE; }
 }
 
@@ -34,7 +41,8 @@ function loadTheme(): ThemeId {
   return getTheme(fromUrl || persisted || "rams").id;
 }
 
-function loadInitialSource(themeSource: StationSource): StationSource {
+function loadInitialSource(themeSource: StationSource, preferredCountryCode: string | null): StationSource {
+  if (preferredCountryCode) return "regional";
   const explicitTheme = new URLSearchParams(window.location.search).has("theme");
   return explicitTheme || localStorage.getItem(THEME_KEY) ? themeSource : "regional";
 }
@@ -55,12 +63,12 @@ export function App() {
   const resolvedUrlsRef = useRef(new Map<string, { at: number; url: string }>());
   const [themeId, setThemeId] = useState<ThemeId>(loadTheme);
   const initialTheme = getTheme(themeId);
-  const initialSource = useRef(loadInitialSource(initialTheme.source));
+  const [profile, setProfile] = useState<TasteProfile>(loadProfile);
+  const initialSource = useRef(loadInitialSource(initialTheme.source, profile.preferredCountryCode));
   const [mood, setMood] = useState<MoodId>(initialTheme.mood);
-  const [source, setSource] = useState<StationSource>(initialTheme.source);
+  const [source, setSource] = useState<StationSource>(initialSource.current);
   const [stations, setStations] = useState<Station[]>([]);
   const [current, setCurrent] = useState<Station | null>(null);
-  const [profile, setProfile] = useState<TasteProfile>(loadProfile);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -174,13 +182,17 @@ export function App() {
         await attachAndPlay(url);
         if (playbackRunRef.current !== runId) return;
         setIsPlaying(true); setIsBuffering(false); setError("");
-        setProfile((previous) => ({ ...previous, history: [{ station, listenedAt: new Date().toISOString() }, ...previous.history.filter((entry) => entry.station.id !== station.id)].slice(0, 24) }));
+        setProfile((previous) => {
+          const reliable = recordStationOutcome(previous, station.id, "success");
+          return { ...reliable, history: [{ station, listenedAt: new Date().toISOString() }, ...reliable.history.filter((entry) => entry.station.id !== station.id)].slice(0, 24) };
+        });
         startingRef.current = false;
         return;
       } catch (reason) {
         if (playbackRunRef.current !== runId) return;
         const blocked = reason instanceof DOMException && reason.name === "NotAllowedError";
         if (blocked) { setIsBuffering(false); setError("风格已经切换。浏览器需要你再点一次播放才能发声。"); startingRef.current = false; return; }
+        setProfile((previous) => recordStationOutcome(previous, station.id, "failure"));
         setFailedIds((previous) => Array.from(new Set([...previous, station.id])));
       }
     }
@@ -191,12 +203,13 @@ export function App() {
     }
   }, [attachAndPlay, resolveStation, stopCurrentStream]);
 
-  const fetchStations = useCallback(async (nextMood: MoodId, nextQuery = "", nextSource: StationSource = "radio-browser", autoplay = false) => {
+  const fetchStations = useCallback(async (nextMood: MoodId, nextQuery = "", nextSource: StationSource = "radio-browser", autoplay = false, countryCode: string | null = nextSource === "regional" ? profile.preferredCountryCode : null) => {
     const catalogRun = ++catalogRunRef.current;
     setIsLoading(true); setError(""); setStations([]);
     try {
       const params = new URLSearchParams({ mood: nextMood, source: nextSource });
       if (nextQuery) params.set("q", nextQuery);
+      if (countryCode) params.set("country", countryCode);
       const response = await fetch(`/api/stations?${params}`);
       const data = await response.json();
       if (catalogRun !== catalogRunRef.current) return [];
@@ -282,6 +295,13 @@ export function App() {
     void fetchStations(mood, "", "global-curated", true);
   };
 
+  const chooseRegion = (countryCode: string | null) => {
+    playbackRunRef.current += 1; stopCurrentStream();
+    setProfile((previous) => ({ ...previous, preferredCountryCode: countryCode }));
+    setSource("regional"); setQuery(""); setCurrent(null); setIsPlaying(false);
+    void fetchStations(mood, "", "regional", true, countryCode);
+  };
+
   const chooseTheme = (nextThemeId: ThemeId) => {
     const nextTheme = getTheme(nextThemeId);
     playbackRunRef.current += 1; stopCurrentStream();
@@ -329,6 +349,7 @@ export function App() {
 
   const recoverPlayback = useCallback(() => {
     if (startingRef.current || !current) return;
+    setProfile((previous) => recordStationOutcome(previous, current.id, "failure"));
     setFailedIds((previous) => Array.from(new Set([...previous, current.id])));
     setIsPlaying(false);
     const failover = failoverRef.current;
@@ -380,6 +401,8 @@ export function App() {
             void fetchStations(mood, "", "china-curated", true);
           }}
           onGlobal={chooseGlobal}
+          onRegion={chooseRegion}
+          preferredCountryCode={profile.preferredCountryCode}
           onVolume={(value) => {
             setVolume(value);
             if (audioRef.current) audioRef.current.volume = value;
