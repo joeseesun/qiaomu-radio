@@ -1,0 +1,23 @@
+[Unit]
+Description=Qiaomu Radio web service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/opt/qiaomu-apps/qiaomu-radio-standalone
+Environment=NODE_ENV=production
+Environment=PORT=3218
+ExecStart=/usr/bin/node server.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
