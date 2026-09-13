@@ -71,7 +71,7 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
     let display: THREE.Mesh | null=null;
     const css=new CSS3DRenderer(); css.domElement.className="native-css-scene"; element.appendChild(css.domElement);
     screenElement.className="fantasy-glass"; screenElement.style.height=`${780*FANTASY_SCREEN.height/FANTASY_SCREEN.width}px`; const cssScene=new THREE.Scene(), menuObject=new CSS3DObject(screenElement);
-    menuObject.scale.setScalar(FANTASY_SCREEN.width/780); cssScene.add(menuObject); screenElement.style.visibility="hidden";
+    menuObject.scale.setScalar(FANTASY_SCREEN.width/780); cssScene.add(menuObject); screenElement.classList.add("native-screen-hidden");
     const feedback=new Map<string,{patch:THREE.Mesh<THREE.BufferGeometry,THREE.MeshBasicMaterial>;motion:PressMotion}>();
     const maskCanvas=document.createElement("canvas");maskCanvas.width=maskCanvas.height=128;
     const maskContext=maskCanvas.getContext("2d")!;maskContext.fillStyle="black";maskContext.fillRect(0,0,128,128);
@@ -150,7 +150,7 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
       const f=feedback.get(action);if(f)f.motion={depth:.014,velocity:0,pulse:0};
     };
     const move=(e:PointerEvent)=>{
-      if(!gesture){hover=hitAt(e);renderer.domElement.style.cursor=hover?hover==="volume"?"grab":"pointer":"grab";return;}
+      if(!gesture){hover=hitAt(e);renderer.domElement.classList.toggle("native-canvas-action",Boolean(hover&&hover!=="volume"));return;}
       if(gesture.id!==e.pointerId)return;
       const g=gesture;g.moved ||= Math.hypot(e.clientX-g.x,e.clientY-g.y)>4;
       if(g.action==="volume"&&g.moved){
@@ -215,7 +215,7 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
       const text=JSON.stringify(lines);if(text!==lastText){draw(lines);lastText=text;}
       if(display)display.visible=!focused;
       const facing=loaded&&camera.position.z>menuObject.position.z+.1;
-      screenElement.style.visibility=focused&&facing?"visible":"hidden";screenElement.inert=!(focused&&facing);
+      screenElement.classList.toggle("native-screen-hidden",!(focused&&facing));screenElement.inert=!(focused&&facing);
       renderer.render(scene,camera);css.render(cssScene,camera);
     });
     return()=>{disposed=true;api.current=null;resize.disconnect();renderer.setAnimationLoop(null);controls.dispose();renderer.domElement.removeEventListener("pointerdown",down,true);renderer.domElement.removeEventListener("pointermove",move);renderer.domElement.removeEventListener("pointerup",up);renderer.domElement.removeEventListener("pointercancel",cancel);renderer.domElement.removeEventListener("lostpointercapture",cancel);renderer.domElement.removeEventListener("pointerleave",leave);renderer.domElement.removeEventListener("wheel",wheel,true);renderer.domElement.removeEventListener("keydown",keyboard);disposeTree(scene);texture.dispose();mask.dispose();environment.dispose();room.dispose();pmrem.dispose();renderer.dispose();renderer.domElement.remove();css.domElement.remove();};

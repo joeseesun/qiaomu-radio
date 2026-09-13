@@ -235,7 +235,7 @@ export function App() {
   useEffect(() => {
     void fetchStations(initialTheme.mood, "", initialSource.current, false);
     // Initial data loads quietly; a deliberate theme click is the autoplay action.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- This initial load must not repeat when callback dependencies change.
   }, []);
 
   useEffect(() => {
