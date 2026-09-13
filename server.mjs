@@ -1,6 +1,9 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { GLOBAL_CURATED_STATIONS, clientIp, countryCode, selectPopularMusic } from "./serverPolicy.mjs";
+import { isHlsStream, mergeHlsPlaylist } from "./hlsRelay.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.argv.includes("--dev");
@@ -139,6 +142,9 @@ const CHINA_STATIONS = [
   },
 ];
 const cache = new Map();
+const playCache = new Map();
+const regionCache = new Map();
+const hlsSessions = new Map();
 
 function cleanStation(station) {
   return {
@@ -180,10 +186,56 @@ async function radioFetch(pathname) {
   throw lastError || new Error("Radio Browser 暂时不可用");
 }
 
+async function requestCountry(request) {
+  const fromEdge = countryCode(request.headers["cf-ipcountry"] || request.headers["x-country-code"]);
+  if (fromEdge) return fromEdge;
+  const ip = clientIp(request);
+  if (!ip) return null;
+  const key = createHash("sha256").update(ip).digest("hex");
+  const cached = regionCache.get(key);
+  if (cached && Date.now() - cached.at < 24 * 60 * 60 * 1000) return cached.code;
+  try {
+    const result = await fetch(`https://api.country.is/${encodeURIComponent(ip)}`, { signal: AbortSignal.timeout(2500) });
+    const data = result.ok ? await result.json() : null;
+    const code = countryCode(data?.country);
+    if (regionCache.size > 1000) regionCache.clear();
+    regionCache.set(key, { at: Date.now(), code });
+    return code;
+  } catch { return null; }
+}
+
+async function globalPopularStations() {
+  try {
+    const raw = await radioFetch("/json/stations/topvote/200?hidebroken=true");
+    const selected = selectPopularMusic(raw, 20).map(cleanStation);
+    return selected.length >= 12 ? selected : GLOBAL_CURATED_STATIONS;
+  } catch { return GLOBAL_CURATED_STATIONS; }
+}
+
+async function regionalStations(request) {
+  const code = await requestCountry(request);
+  if (!code) return { stations: await globalPopularStations(), countryCode: null, source: "global-fallback" };
+  if (code === "CN") {
+    for (const station of CHINA_STATIONS.filter((item) => isHlsStream(item.streamUrl))) void warmHls(station.id);
+    return { stations: CHINA_STATIONS, countryCode: code, source: "china-curated" };
+  }
+  try {
+    const params = new URLSearchParams({ countrycode: code, hidebroken: "true", limit: "80", order: "votes", reverse: "true" });
+    const raw = await radioFetch(`/json/stations/search?${params}`);
+    const music = selectPopularMusic(raw, 20).map(cleanStation);
+    if (music.length >= 5) return { stations: music, countryCode: code, source: "regional" };
+  } catch { /* fall through to global list */ }
+  return { stations: await globalPopularStations(), countryCode: code, source: "global-fallback" };
+}
+
 app.get("/api/stations", async (request, response) => {
   const mood = String(request.query.mood || "focus");
   const query = String(request.query.q || "").trim().slice(0, 80);
   const source = String(request.query.source || "radio-browser");
+  if (source === "regional") {
+    const regional = await regionalStations(request);
+    return response.json({ ...regional, cached: regional.source === "global-fallback" });
+  }
   if (source === "china-curated") {
     const normalizedQuery = query.toLowerCase();
     const stations = normalizedQuery
@@ -191,6 +243,7 @@ app.get("/api/stations", async (request, response) => {
           [station.name, station.country, station.language, ...station.tags].join(" ").toLowerCase().includes(normalizedQuery),
         )
       : CHINA_STATIONS;
+    for (const station of stations.filter((item) => isHlsStream(item.streamUrl))) void warmHls(station.id);
     return response.json({ stations, cached: true, source: "china-curated" });
   }
 
@@ -249,20 +302,88 @@ app.get("/api/play/:stationId", async (request, response) => {
   if (!/^[a-zA-Z0-9-]{8,64}$/.test(stationId)) {
     return response.status(400).json({ error: "电台标识无效。" });
   }
-  const curatedStation = CHINA_STATIONS.find((station) => station.id === stationId);
+  const curatedStation = [...CHINA_STATIONS, ...GLOBAL_CURATED_STATIONS].find((station) => station.id === stationId);
   if (curatedStation) {
-    return response.json({ url: curatedStation.streamUrl, ok: true, source: "china-curated" });
+    if (isHlsStream(curatedStation.streamUrl)) void warmHls(stationId);
+    const url = isHlsStream(curatedStation.streamUrl) ? `/api/hls/${encodeURIComponent(stationId)}/index.m3u8` : curatedStation.streamUrl;
+    return response.json({ url, ok: true, source: curatedStation.source });
   }
+  const cached = playCache.get(stationId);
+  if (cached && Date.now() - cached.at < 10 * 60 * 1000) return response.json({ url: cached.url, ok: true, cached: true });
   try {
     const result = await radioFetch(`/json/url/${encodeURIComponent(stationId)}`);
+    if (result.url) {
+      if (playCache.size > 500) playCache.clear();
+      playCache.set(stationId, { at: Date.now(), url: result.url });
+    }
     response.json({ url: result.url, ok: Boolean(result.ok) });
   } catch (error) {
     response.status(502).json({ error: "这家电台暂时无法连接，可以试试下一家。" });
   }
 });
 
+function hlsSession(stationId) {
+  const station = CHINA_STATIONS.find((item) => item.id === stationId && isHlsStream(item.streamUrl));
+  if (!station) return null;
+  let session = hlsSessions.get(stationId);
+  if (!session) { session = { source: station.streamUrl, resources: new Map(), segments: new Map(), history: new Map(), warming: false }; hlsSessions.set(stationId, session); }
+  return session;
+}
+
+async function cachedSegment(session, token, url) {
+  const existing = session.segments.get(token);
+  if (existing && Date.now() - existing.at < 90_000) return existing.promise;
+  const promise = fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(8000) }).then(async (upstream) => {
+    if (!upstream.ok) throw new Error(`HLS segment ${upstream.status}`);
+    return { body: Buffer.from(await upstream.arrayBuffer()), type: upstream.headers.get("content-type") || "video/mp2t" };
+  });
+  session.segments.set(token, { at: Date.now(), promise });
+  if (session.segments.size > 60) session.segments.delete(session.segments.keys().next().value);
+  return promise;
+}
+
+async function refreshHls(session, stationId, source = session.source) {
+  const upstream = await fetch(source, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(6500) });
+  if (!upstream.ok) throw new Error(`HLS playlist ${upstream.status}`);
+  const merged = mergeHlsPlaylist(await upstream.text(), source, stationId, (key, url) => session.resources.set(key, url), session.history);
+  for (const [key, url] of session.resources) if (!isHlsStream(url)) void cachedSegment(session, key, url).catch(() => {});
+  return merged.body;
+}
+
+async function warmHls(stationId) {
+  const session = hlsSession(stationId);
+  if (!session || session.warming) return;
+  session.warming = true;
+  try {
+    for (let i=0;i<10;i+=1) { await refreshHls(session, stationId); await new Promise((resolve) => setTimeout(resolve, 900)); }
+  } catch { /* playback request can retry */ }
+  finally { session.warming = false; }
+}
+
+app.get("/api/hls/:stationId/:resource", async (request, response) => {
+  const stationId = request.params.stationId;
+  const session = hlsSession(stationId);
+  if (!session) return response.status(404).end();
+  const resource = request.params.resource;
+  try {
+    if (resource.endsWith(".m3u8")) {
+      const token = resource.slice(0, -5);
+      const source = token === "index" ? session.source : session.resources.get(token);
+      if (!source || !isHlsStream(source)) return response.status(404).end();
+      const body = await refreshHls(session, stationId, source);
+      response.set({ "Content-Type": "application/vnd.apple.mpegurl", "Cache-Control": "no-store" }).send(body);
+      return;
+    }
+    const token = resource.replace(/\.(?:ts|aac|m4s|mp4)$/, "");
+    const url = session.resources.get(token);
+    if (!url) return response.status(404).end();
+    const segment = await cachedSegment(session, token, url);
+    response.set({ "Content-Type": segment.type, "Cache-Control": "public, max-age=90" }).send(segment.body);
+  } catch { response.status(502).end(); }
+});
+
 app.get("/api/health", (_request, response) => {
-  response.json({ ok: true, sources: ["Radio Browser", "China curated broadcaster streams"], cacheEntries: cache.size, chinaStations: CHINA_STATIONS.length });
+  response.json({ ok: true, sources: ["Radio Browser", "China curated broadcaster streams", "Global curated music fallback"], cacheEntries: cache.size, playCacheEntries: playCache.size, chinaStations: CHINA_STATIONS.length, globalFallbackStations: GLOBAL_CURATED_STATIONS.length });
 });
 
 const songCache = new Map();

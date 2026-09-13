@@ -1,7 +1,7 @@
 export type MoodId = "unwind" | "focus" | "jazz" | "classical" | "energy" | "world";
 
 export type ThemeId = "editorial" | "pocket" | "deck" | "console" | "china" | "rams" | "fantasy";
-export type StationSource = "radio-browser" | "china-curated";
+export type StationSource = "radio-browser" | "china-curated" | "regional" | "global-curated";
 
 export type Station = {
   id: string;

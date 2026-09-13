@@ -13,18 +13,20 @@ import { bindFantasySpeakers } from "./fantasySurface";
 import { stepSpeakerMotion, speakerExcursion, speakerVisual } from "./fantasySpeakerMotion";
 import { clockwiseArc, clampVolume, turnVolume } from "./radioGestures";
 import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, FANTASY_SPEAKERS, normalizeFantasyModel, surfacePatch, surfacePoint, type FantasyAction } from "./fantasySurface";
+import { regionName, useI18n } from "./i18n";
 
-type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support";
+type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
 type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: Page) => void; track: NowPlaying | null };
 type SceneApi = { reset: () => void; menu: (open: boolean) => void };
 
 export default function FantasyRadio({ player: p, screen, page, open, track }: Props) {
+  const { locale, t } = useI18n();
   const host = useRef<HTMLDivElement>(null), api = useRef<SceneApi | null>(null);
   const [screenElement] = useState(() => document.createElement("div"));
   const [ready, setReady] = useState(false), [failed, setFailed] = useState(false), [progress, setProgress] = useState(.04);
   const [panel, setPanel] = useState(false);
   const [muted, setMuted] = useState(false), remembered = useRef(p.volume);
-  const current = useRef({ p, track, open, muted, panel }); current.current = { p, track, open, muted, panel };
+  const current = useRef({ p, track, open, muted, panel, locale, t }); current.current = { p, track, open, muted, panel, locale, t };
   const physicalVolume = useRef(p.volume); physicalVolume.current = muted ? remembered.current : p.volume;
   const feedbackText = useRef({ text: "", until: 0 });
   const announce = (text: string) => { feedbackText.current = { text, until: Date.now() + 1500 }; };
@@ -206,8 +208,9 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
         const visual=speakerVisual(speakerMotion,index);
         mesh.position.z=baseZ+visual.excursion*3.2;mesh.scale.set(visual.scale,visual.scale,1);mesh.material.opacity=visual.opacity;
       });
-      const note=player.error||(feedbackText.current.until>Date.now()?feedbackText.current.text:hover?labels[hover]:player.notice||(current.current.muted?"静音 · 按音量旋钮恢复":"轻触黑玻璃，打开菜单"));
-      const lines=[song?player.station?.name||"WORLD RADIO":player.station?`${player.station.country} · LIVE RADIO`:"QIAOMU / WORLD RADIO",song?.title||player.station?.name||"按蓝色宝石，开始收听",song?.artist||note,`${player.isLoading?"正在连接…":player.isPlaying?"● 正在直播":"Ⅱ 已暂停"}    ${current.current.muted?"静音":`音量 ${Math.round(player.volume*100)}%`}    ${player.liked?"♥ 已收藏":""}`];
+      const i18n=current.current;
+      const note=player.error||(feedbackText.current.until>Date.now()?feedbackText.current.text:hover?labels[hover]:player.notice||i18n.t("action.menu"));
+      const lines=[song?player.station?.name||"WORLD RADIO":player.station?`${regionName(i18n.locale,player.station.countryCode,player.station.country)} · LIVE RADIO`:"QIAOMU / WORLD RADIO",song?.title||player.station?.name||i18n.t("now.prompt"),song?.artist||note,`${player.isLoading?i18n.t("status.connecting"):player.isPlaying?`● ${i18n.t("status.live")}`:`Ⅱ ${i18n.t("status.paused")}`}    ${i18n.t("action.volume")} ${Math.round(player.volume*100)}%`];
       if(song&&(player.error||hover||feedbackText.current.until>Date.now()))lines[0]=note;
       const text=JSON.stringify(lines);if(text!==lastText){draw(lines);lastText=text;}
       if(display)display.visible=!focused;

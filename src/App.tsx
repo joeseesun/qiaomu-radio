@@ -5,6 +5,8 @@ import { applyFeedback, EMPTY_PROFILE, rankStations } from "./recommendation";
 import { getTheme } from "./themes";
 import { ThemePicker } from "./ThemePicker";
 import type { MoodId, Station, StationSource, TasteProfile, ThemeId } from "./types";
+import { HLS_RADIO_CONFIG, PREFETCH_STATION_COUNT, STREAM_URL_CACHE_MS } from "./playbackPolicy";
+import { useI18n, type MessageKey } from "./i18n";
 
 const MOODS: Array<{ id: MoodId; label: string; note: string; accent: string }> = [
   { id: "unwind", label: "松一口气", note: "轻柔、松弛、缓慢", accent: "#d75f3b" },
@@ -32,9 +34,16 @@ function loadTheme(): ThemeId {
   return getTheme(fromUrl || persisted || "rams").id;
 }
 
+function loadInitialSource(themeSource: StationSource): StationSource {
+  const explicitTheme = new URLSearchParams(window.location.search).has("theme");
+  return explicitTheme || localStorage.getItem(THEME_KEY) ? themeSource : "regional";
+}
+
 function isHlsUrl(url: string) { return /\.m3u8(?:$|\?)/i.test(url); }
 
 export function App() {
+  const { t } = useI18n();
+  const moods = useMemo(() => MOODS.map((item) => ({ ...item, label: t(`mood.${item.id}` as MessageKey) })), [t]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const playbackRunRef = useRef(0);
@@ -43,8 +52,10 @@ export function App() {
   const recoverRef = useRef<() => void>(() => {});
   const startingRef = useRef(false);
   const failoverRef = useRef<{ candidates: Station[]; index: number } | null>(null);
+  const resolvedUrlsRef = useRef(new Map<string, { at: number; url: string }>());
   const [themeId, setThemeId] = useState<ThemeId>(loadTheme);
   const initialTheme = getTheme(themeId);
+  const initialSource = useRef(loadInitialSource(initialTheme.source));
   const [mood, setMood] = useState<MoodId>(initialTheme.mood);
   const [source, setSource] = useState<StationSource>(initialTheme.source);
   const [stations, setStations] = useState<Station[]>([]);
@@ -85,6 +96,16 @@ export function App() {
     if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); }
   }, []);
 
+  const resolveStation = useCallback(async (station: Station) => {
+    const cached = resolvedUrlsRef.current.get(station.id);
+    if (cached && Date.now() - cached.at < STREAM_URL_CACHE_MS) return cached.url;
+    const response = await fetch(`/api/play/${encodeURIComponent(station.id)}`);
+    const data = await response.json();
+    if (!response.ok || !data.url) throw new Error(data.error || "直播流暂时不可用。");
+    resolvedUrlsRef.current.set(station.id, { at: Date.now(), url: data.url });
+    return String(data.url);
+  }, []);
+
   const attachAndPlay = useCallback(async (url: string) => {
     const audio = audioRef.current;
     if (!audio) throw new Error("播放器尚未就绪。");
@@ -113,12 +134,15 @@ export function App() {
       audio.addEventListener("error", onAudioError, { once: true });
 
       if (isHlsUrl(url) && !audio.canPlayType("application/vnd.apple.mpegurl") && Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+        let recoveryAttempts = 0;
+        const hls = new Hls(HLS_RADIO_CONFIG);
         hlsRef.current = hls;
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
-          if (settled && !startingRef.current) recoverRef.current();
-          else finish(new Error("HLS 直播源连接失败。"));
+          if (!settled || startingRef.current) { finish(new Error("HLS 直播源连接失败。")); return; }
+          if (recoveryAttempts < 2 && data.type === Hls.ErrorTypes.NETWORK_ERROR) { recoveryAttempts += 1; hls.startLoad(); return; }
+          if (recoveryAttempts < 2 && data.type === Hls.ErrorTypes.MEDIA_ERROR) { recoveryAttempts += 1; hls.recoverMediaError(); return; }
+          recoverRef.current();
         });
         hls.on(Hls.Events.MANIFEST_PARSED, () => { audio.play().catch((reason) => finish(reason instanceof Error ? reason : new Error("浏览器阻止了自动播放。"))); });
         hls.loadSource(url);
@@ -145,11 +169,9 @@ export function App() {
       setCurrent(station);
       if (index > startIndex) setNotice(`${candidates[index - 1].name} 无法播放，正在自动尝试下一家。`);
       try {
-        const response = await fetch(`/api/play/${encodeURIComponent(station.id)}`);
-        const data = await response.json();
+        const url = await resolveStation(station);
         if (playbackRunRef.current !== runId) return;
-        if (!response.ok || !data.url) throw new Error(data.error || "直播流暂时不可用。");
-        await attachAndPlay(data.url);
+        await attachAndPlay(url);
         if (playbackRunRef.current !== runId) return;
         setIsPlaying(true); setIsBuffering(false); setError("");
         setProfile((previous) => ({ ...previous, history: [{ station, listenedAt: new Date().toISOString() }, ...previous.history.filter((entry) => entry.station.id !== station.id)].slice(0, 24) }));
@@ -167,7 +189,7 @@ export function App() {
       setError(`这个系列暂时没有可播放的电台，已自动尝试 ${limit - startIndex} 家。`);
       startingRef.current = false;
     }
-  }, [attachAndPlay, stopCurrentStream]);
+  }, [attachAndPlay, resolveStation, stopCurrentStream]);
 
   const fetchStations = useCallback(async (nextMood: MoodId, nextQuery = "", nextSource: StationSource = "radio-browser", autoplay = false) => {
     const catalogRun = ++catalogRunRef.current;
@@ -194,10 +216,18 @@ export function App() {
   }, [profile, startSequence]);
 
   useEffect(() => {
-    void fetchStations(initialTheme.mood, "", initialTheme.source, false);
+    void fetchStations(initialTheme.mood, "", initialSource.current, false);
     // Initial data loads quietly; a deliberate theme click is the autoplay action.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const candidates = [current, ...queue].filter((station): station is Station => Boolean(station)).slice(0, PREFETCH_STATION_COUNT);
+    for (const station of candidates) {
+      // Curated HLS must resolve through the same-origin segment prefetch relay.
+      if (station.streamUrl && !isHlsUrl(station.streamUrl)) resolvedUrlsRef.current.set(station.id, { at: Date.now(), url: station.streamUrl });
+    }
+  }, [current, queue]);
 
   const playNext = useCallback(() => {
     const candidates = [...queue, ...stations.filter((station) => station.id !== current?.id && !queue.some((queued) => queued.id === station.id))];
@@ -292,7 +322,7 @@ export function App() {
           station={current}
           stations={queue}
           profile={profile}
-          moods={MOODS}
+          moods={moods}
           mood={mood}
           source={source}
           isPlaying={isPlaying}
@@ -323,7 +353,7 @@ export function App() {
           onRetry={retryCurrentSeries}
         />
       </div>
-      <audio ref={audioRef} onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }} onWaiting={() => { if (!startingRef.current) setIsBuffering(true); }} onPause={() => setIsPlaying(false)} onError={recoverPlayback} />
+      <audio ref={audioRef} preload="auto" playsInline onPlaying={() => { setIsPlaying(true); setIsBuffering(false); }} onCanPlay={() => setIsBuffering(false)} onWaiting={() => { if (!startingRef.current) setIsBuffering(true); }} onStalled={() => { if (!startingRef.current) setIsBuffering(true); }} onPause={() => setIsPlaying(false)} onError={recoverPlayback} />
     </main>
   );
 }
