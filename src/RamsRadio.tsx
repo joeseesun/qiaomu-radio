@@ -10,9 +10,9 @@ import type { NowPlaying } from "./useNowPlaying";
 import { ModelLoader } from "./ModelLoader";
 import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPressFeedback";
 import { bindFantasySpeakers } from "./fantasySurface";
-import { stepSpeakerMotion, speakerExcursion } from "./fantasySpeakerMotion";
+import { stepSpeakerMotion, speakerExcursion, speakerVisual } from "./fantasySpeakerMotion";
 import { clockwiseArc, clampVolume, turnVolume } from "./radioGestures";
-import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, normalizeFantasyModel, surfacePatch, surfacePoint, type FantasyAction } from "./fantasySurface";
+import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, FANTASY_SPEAKERS, normalizeFantasyModel, surfacePatch, surfacePoint, type FantasyAction } from "./fantasySurface";
 
 type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support";
 type Props = { player: PlayerProps; screen: ReactNode; page: string; open: (page: Page) => void; track: NowPlaying | null };
@@ -60,6 +60,7 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
     const device=new THREE.Group(); scene.add(device);
     let model: THREE.Object3D | null=null, deform: ReturnType<typeof bindFantasyPress> | null=null;
     let speakers: ReturnType<typeof bindFantasySpeakers> | null=null;
+    const speakerVisuals: Array<{mesh:THREE.Mesh<THREE.CircleGeometry,THREE.MeshBasicMaterial>;baseZ:number}> = [];
     let speakerMotion={level:0,phase:0};
     const initialVolume=physicalVolume.current;
     const canvas=document.createElement("canvas"); canvas.width=1200; canvas.height=438;
@@ -87,6 +88,20 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
           const patch=new THREE.Mesh(surfacePatch(model,c.x,c.y,c.radius*1.5,c.radius*1.5,12),new THREE.MeshBasicMaterial({color:c.color,alphaMap:mask,transparent:true,opacity:0,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}));
           device.add(patch);feedback.set(c.action,{patch,motion:{depth:0,velocity:0,pulse:0}});
         }
+        FANTASY_SPEAKERS.forEach((speaker,index)=>{
+          const face=surfacePoint(model!,speaker.x,speaker.y);
+          if(!face)return;
+          const glowCanvas=document.createElement("canvas");glowCanvas.width=glowCanvas.height=128;
+          const glowContext=glowCanvas.getContext("2d")!,gradient=glowContext.createRadialGradient(64,64,3,64,64,64);
+          const color=index===0?"255,102,47":"67,157,255";
+          gradient.addColorStop(0,`rgba(${color},.42)`);gradient.addColorStop(.42,`rgba(${color},.16)`);gradient.addColorStop(1,`rgba(${color},0)`);
+          glowContext.fillStyle=gradient;glowContext.fillRect(0,0,128,128);
+          const map=new THREE.CanvasTexture(glowCanvas);map.colorSpace=THREE.SRGBColorSpace;
+          const material=new THREE.MeshBasicMaterial({map,transparent:true,opacity:0,depthWrite:false,depthTest:false,toneMapped:false,blending:THREE.AdditiveBlending});
+          const mesh=new THREE.Mesh(new THREE.CircleGeometry(speaker.radius*.72,64),material);
+          mesh.position.set(speaker.x,speaker.y,face.z+.004);mesh.renderOrder=3;device.add(mesh);
+          speakerVisuals.push({mesh,baseZ:mesh.position.z});
+        });
         device.updateMatrixWorld(true);
         // Include the surface glows so they follow the same weighted stroke as the buttons.
         deform=bindFantasyPress(device); speakers=bindFantasySpeakers(model); loaded=true;setProgress(1);setReady(true);
@@ -185,7 +200,12 @@ export default function FantasyRadio({ player: p, screen, page, open, track }: P
       deform?.(depths,(initialVolume-physicalVolume.current)*Math.PI*1.5);
       const player=current.current.p, song=current.current.track;
       speakerMotion=stepSpeakerMotion(speakerMotion,delta,player.isPlaying&&!player.isLoading&&!current.current.muted&&!document.hidden,player.volume,reduced);
-      speakers?.([speakerExcursion(speakerMotion,0),speakerExcursion(speakerMotion,1)]);
+      const excursions=[speakerExcursion(speakerMotion,0),speakerExcursion(speakerMotion,1)];
+      speakers?.(excursions.map(value=>value*1.8));
+      speakerVisuals.forEach(({mesh,baseZ},index)=>{
+        const visual=speakerVisual(speakerMotion,index);
+        mesh.position.z=baseZ+visual.excursion*3.2;mesh.scale.set(visual.scale,visual.scale,1);mesh.material.opacity=visual.opacity;
+      });
       const note=player.error||(feedbackText.current.until>Date.now()?feedbackText.current.text:hover?labels[hover]:player.notice||(current.current.muted?"静音 · 按音量旋钮恢复":"轻触黑玻璃，打开菜单"));
       const lines=[song?player.station?.name||"WORLD RADIO":player.station?`${player.station.country} · LIVE RADIO`:"QIAOMU / WORLD RADIO",song?.title||player.station?.name||"按蓝色宝石，开始收听",song?.artist||note,`${player.isLoading?"正在连接…":player.isPlaying?"● 正在直播":"Ⅱ 已暂停"}    ${current.current.muted?"静音":`音量 ${Math.round(player.volume*100)}%`}    ${player.liked?"♥ 已收藏":""}`];
       if(song&&(player.error||hover||feedbackText.current.until>Date.now()))lines[0]=note;
