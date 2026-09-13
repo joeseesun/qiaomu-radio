@@ -11,12 +11,14 @@ import { clampVolume, clockwiseArc, detents, TUNING_DETENT, turnVolume, volumeAn
 import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPressFeedback";
 import { SupportPanel } from "./SupportPanel";
 import { ZoomOut } from "lucide-react";
+import { LOCALES, LOCALE_LABELS, regionName, useI18n } from "./i18n";
 
-type Menu = "now" | "menu" | "stations" | "channels" | "favorites" | "history" | "search" | "support" | "explore";
+type Menu = "now" | "menu" | "stations" | "channels" | "favorites" | "history" | "search" | "support" | "explore" | "language";
 type Row = { id: string; label: string; action: () => void };
 type View = { reset: () => void; focus: () => void; explode: (value: boolean) => void; volume: (value: number) => void; tune: (delta: number) => void };
 
 export default function NativeRadio({ player: p, track }: { player: PlayerProps; track: NowPlaying | null }) {
+  const { locale, setLocale, t } = useI18n();
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<View | null>(null);
   const [screenElement] = useState(() => document.createElement("div"));
@@ -39,19 +41,20 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   const saved = [...new Map([...p.profile.history.map(e=>e.station),...p.stations,...(p.station?[p.station]:[])].map(s=>[s.id,s])).values()];
   const stationRows = (menu === "favorites" ? saved.filter(s=>p.profile.likedStationIds.includes(s.id)) : menu === "history" ? p.profile.history.map(e=>e.station) : p.stations).map(s=>({ id:s.id,label:s.name,action:()=>{p.onPlay(s);go("now");} }));
   const rows: Row[] = menu === "menu" ? [
-    {id:"stations",label:"电台列表",action:()=>go("stations")},
-    {id:"channels",label:"频道 / 中国电台",action:()=>go("channels")},
-    {id:"search",label:"搜索电台",action:()=>go("search")},
-    {id:"favorites",label:"收藏",action:()=>go("favorites")},
-    {id:"history",label:"收听历史",action:()=>go("history")},
-    {id:"support",label:"支持与关注",action:()=>go("support")},
-    {id:"like",label:p.liked?"取消收藏当前电台":"收藏当前电台",action:()=>{if(p.station)p.onLike();}},
-    {id:"dislike",label:"不喜欢，换一家",action:()=>{if(p.station)p.onDislike();go("now");}},
-    {id:"explore",label:"探索机身",action:()=>go("explore")},
-  ] : menu === "channels" ? [...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:"中国电台",action:()=>{p.onChina();go("now");}}] : menu === "explore" ? [
-    {id:"explode",label:exploded?"合上机身":"拆解展示",action:()=>{const next=!exploded;setExploded(next);view.current?.explode(next);}},
-    {id:"reset",label:"恢复正面视角",action:()=>{setExploded(false);view.current?.reset();go("now");}},
-    {id:"back",label:"返回菜单",action:()=>go("menu")},
+    {id:"stations",label:t("page.stations"),action:()=>go("stations")},
+    {id:"channels",label:t("page.channels"),action:()=>go("channels")},
+    {id:"search",label:t("page.search"),action:()=>go("search")},
+    {id:"favorites",label:t("page.favorites"),action:()=>go("favorites")},
+    {id:"history",label:t("page.history"),action:()=>go("history")},
+    {id:"language",label:t("page.language"),action:()=>go("language")},
+    {id:"support",label:t("page.support"),action:()=>go("support")},
+    {id:"like",label:p.liked?t("action.unfavoriteCurrent"):t("action.favoriteCurrent"),action:()=>{if(p.station)p.onLike();}},
+    {id:"dislike",label:t("action.dislike"),action:()=>{if(p.station)p.onDislike();go("now");}},
+    {id:"explore",label:t("action.explore"),action:()=>go("explore")},
+  ] : menu === "channels" ? [...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:t("search.china"),action:()=>{p.onChina();go("now");}}] : menu === "language" ? LOCALES.map(item=>({id:item,label:`${item===locale?"✓ ":""}${LOCALE_LABELS[item]}`,action:()=>{setLocale(item);go("menu");}})) : menu === "explore" ? [
+    {id:"explode",label:exploded?t("action.collapse"):t("action.explode"),action:()=>{const next=!exploded;setExploded(next);view.current?.explode(next);}},
+    {id:"reset",label:t("action.restore"),action:()=>{setExploded(false);view.current?.reset();go("now");}},
+    {id:"back",label:t("action.back"),action:()=>go("menu")},
   ] : menu === "support" ? [] : stationRows;
   const current = useRef({p,menu,rows,selection,preview,go});
   current.current = {p,menu,rows,selection,preview,go};
@@ -84,6 +87,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   useEffect(()=>{tunedStationId.current=p.station?.id||null;setPreview(null);},[p.station?.id]);
   useEffect(()=>()=>clearTimeout(volumeTimer.current),[]);
   useEffect(()=>{view.current?.volume(physicalVolume.current);},[p.volume,ready,muted]);
+  useEffect(()=>{host.current?.querySelector("canvas")?.setAttribute("aria-label",t("theme.rams"));},[ready,t]);
 
   useEffect(()=>{
     const element=host.current!;
@@ -229,19 +233,19 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     return()=>{view.current=null;resize.disconnect();renderer.setAnimationLoop(null);controls.removeEventListener("start",orbitStart);controls.removeEventListener("end",orbitEnd);controls.dispose();renderer.domElement.removeEventListener("keydown",key);renderer.domElement.removeEventListener("pointerdown",down,true);renderer.domElement.removeEventListener("pointermove",move,true);renderer.domElement.removeEventListener("pointerup",up,true);renderer.domElement.removeEventListener("pointercancel",cancel,true);renderer.domElement.removeEventListener("lostpointercapture",cancel,true);renderer.domElement.removeEventListener("wheel",wheel,true);disposeTree(scene);environment.dispose();room.dispose();pmrem.dispose();renderer.dispose();renderer.domElement.remove();css.domElement.remove();};
   },[screenElement]);
 
-  const title=({now:"LIVE RADIO",menu:"乔木电台",stations:"电台列表",channels:"频道",favorites:"收藏",history:"收听历史",search:"搜索",support:"支持与关注",explore:"探索机身"})[menu];
+  const title=({now:"LIVE RADIO",menu:t("page.menu"),stations:t("page.stations"),channels:t("page.channels"),favorites:t("page.favorites"),history:t("page.history"),search:t("page.search"),support:t("page.support"),explore:"EXPLORE",language:t("page.language")})[menu];
   const start=Math.floor(selection/3)*3;
   const screenUI=<div className="native-screen-content" onKeyDown={e=>{if(e.target instanceof HTMLInputElement)return;if(e.key==="Escape"){go("now");view.current?.reset();}if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();tune(e.key==="ArrowDown"?1:-1);}}}>
-    {menu==="now"?<button className="native-now" aria-label="打开机内菜单" onClick={()=>go("menu")}><span>{candidate?"调谐 · 正在切换":p.station?.name||"QIAOMU / RADIO"}</span><strong>{candidate?.name||track?.title||p.station?.name||"按橙色按钮，开始收听"}</strong><span>{muted?"静音 · 按音量旋钮恢复":adjustingVolume?`音量 ${Math.round(p.volume*100)}%${p.volume===0?" · 最小":p.volume===1?" · 最大":""}` : candidate?.country||track?.artist||"电台直播"}</span><small>{p.error||p.notice||(p.isLoading?"正在连接…":p.isPlaying?"● ON AIR":"Ⅱ STANDBY")}　{p.liked?"♥":""}　MENU ›</small></button>:<>
-      <header><button aria-label="恢复原始视角" onClick={()=>{setExploded(false);go("now");view.current?.reset();}}><ZoomOut size={18}/></button><span>{title}</span><button aria-label="返回机内菜单" onClick={()=>go("menu")}>≡</button></header>
-      {menu==="search"?<form onSubmit={e=>{e.preventDefault();p.onSearch(query.trim());go("stations");}}><input aria-label="电台名称" placeholder="电台名称…" value={query} onChange={e=>setQuery(e.target.value)}/><button>搜索</button></form>:menu==="support"?<SupportPanel/>:<div className="native-menu-rows" onWheel={e=>{e.stopPropagation();tune(Math.sign(e.deltaY));}}>{rows.slice(start,start+3).map((row,i)=><button key={row.id} aria-current={selection===start+i?"true":undefined} onFocus={()=>setSelection(start+i)} onClick={row.action}><span>{row.label}</span><span>›</span></button>)}{!rows.length&&<p>{p.isLoading?"正在寻找电台…":p.error||"暂无电台，返回选择频道"}</p>}</div>}
-      {rows.length>3&&menu!=="search"&&menu!=="support"&&<nav><button aria-label="上一页电台菜单" disabled={selection<3} onClick={()=>setSelection(Math.max(0,selection-3))}>↑</button><span>{Math.floor(selection/3)+1}/{Math.ceil(rows.length/3)}</span><button aria-label="下一页电台菜单" disabled={start+3>=rows.length} onClick={()=>setSelection(Math.min(rows.length-1,selection+3))}>↓</button></nav>}
+    {menu==="now"?<button className="native-now" aria-label={t("action.menu")} onClick={()=>go("menu")}><span>{candidate?.name||p.station?.name||"QIAOMU / RADIO"}</span><strong>{candidate?.name||track?.title||p.station?.name||t("now.prompt")}</strong><span>{adjustingVolume?`${t("action.volume")} ${Math.round(p.volume*100)}%`:candidate?regionName(locale,candidate.countryCode,candidate.country):p.station?regionName(locale,p.station.countryCode,p.station.country):track?.artist||t("live.radio")}</span><small>{p.error||p.notice||(p.isLoading?t("status.connecting"):p.isPlaying?"● ON AIR":"Ⅱ STANDBY")}　{p.liked?"♥":""}　MENU ›</small></button>:<>
+      <header><button aria-label={t("action.restore")} onClick={()=>{setExploded(false);go("now");view.current?.reset();}}><ZoomOut size={18}/></button><span>{title}</span><button aria-label={t("action.back")} onClick={()=>go("menu")}>≡</button></header>
+      {menu==="search"?<form onSubmit={e=>{e.preventDefault();p.onSearch(query.trim());go("stations");}}><input aria-label={t("search.name")} placeholder={t("search.name")} value={query} onChange={e=>setQuery(e.target.value)}/><button>{t("search.submit")}</button></form>:menu==="support"?<SupportPanel/>:<div className="native-menu-rows" onWheel={e=>{e.stopPropagation();tune(Math.sign(e.deltaY));}}>{rows.slice(start,start+3).map((row,i)=><button key={row.id} aria-current={selection===start+i?"true":undefined} onFocus={()=>setSelection(start+i)} onClick={row.action}><span>{row.label}</span><span>›</span></button>)}{!rows.length&&<p>{p.isLoading?t("empty.loading"):p.error||t("empty.stations")}</p>}</div>}
+      {rows.length>3&&menu!=="search"&&menu!=="support"&&<nav><button aria-label={t("action.previous")} disabled={selection<3} onClick={()=>setSelection(Math.max(0,selection-3))}>↑</button><span>{Math.floor(selection/3)+1}/{Math.ceil(rows.length/3)}</span><button aria-label={t("action.next")} disabled={start+3>=rows.length} onClick={()=>setSelection(Math.min(rows.length-1,selection+3))}>↓</button></nav>}
     </>}
   </div>;
-  return <section className="native-radio" aria-label="博朗 3D 收音机">
+  return <section className="native-radio" aria-label={t("theme.rams")}>
     <div className="native-stage" ref={host}/>
     {failed?<div className="native-glass native-flat-screen">{screenUI}</div>:createPortal(screenUI,screenElement)}
-    {!ready&&!failed&&<div className="native-loading" role="status" aria-label="正在载入博朗 3D 收音机"/>}
-    <span className="native-sr" role="status">{p.error||(candidate?`正在切换到 ${candidate.name}`:`${p.isPlaying?"正在播放":"已暂停"} ${track?.title||p.station?.name||""}`)}</span>
+    {!ready&&!failed&&<div className="native-loading" role="status" aria-label={t("status.connecting")}/>}
+    <span className="native-sr" role="status">{p.error||`${p.isPlaying?t("status.live"):t("status.paused")} ${track?.title||candidate?.name||p.station?.name||""}`}</span>
   </section>;
 }

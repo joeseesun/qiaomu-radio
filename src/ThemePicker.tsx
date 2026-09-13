@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Palette } from "lucide-react";
 import { RADIO_THEMES } from "./themes";
 import type { ThemeId } from "./types";
+import { useI18n, type MessageKey } from "./i18n";
 
 export function ThemePicker({ value, onChange }: { value: ThemeId; onChange: (id: ThemeId) => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [awake, setAwake] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -37,7 +39,7 @@ export function ThemePicker({ value, onChange }: { value: ThemeId; onChange: (id
     const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
     items[next]?.focus();
   }}>
-    <button className="theme-trigger" ref={trigger} aria-label="切换主题" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><Palette size={20} strokeWidth={1.5} /></button>
-    {open && <div className="theme-popover" role="menu" aria-label="播放器主题">{RADIO_THEMES.map((theme) => <button key={theme.id} role="menuitemradio" aria-checked={value === theme.id} onClick={() => { onChange(theme.id); setOpen(false); trigger.current?.focus(); }}><span className={`theme-dot dot-${theme.id}`} /><span>{theme.label}</span>{value === theme.id && <Check size={15} />}</button>)}</div>}
+    <button className="theme-trigger" ref={trigger} aria-label={t("theme.switch")} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><Palette size={20} strokeWidth={1.5} /></button>
+    {open && <div className="theme-popover" role="menu" aria-label={t("theme.menu")}>{RADIO_THEMES.map((theme) => <button key={theme.id} role="menuitemradio" aria-checked={value === theme.id} onClick={() => { onChange(theme.id); setOpen(false); trigger.current?.focus(); }}><span className={`theme-dot dot-${theme.id}`} /><span>{t(`theme.${theme.id}` as MessageKey)}</span>{value === theme.id && <Check size={15} />}</button>)}</div>}
   </div>;
 }
