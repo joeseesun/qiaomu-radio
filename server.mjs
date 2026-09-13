@@ -215,10 +215,7 @@ async function globalPopularStations() {
 async function regionalStations(request) {
   const code = await requestCountry(request);
   if (!code) return { stations: await globalPopularStations(), countryCode: null, source: "global-fallback" };
-  if (code === "CN") {
-    for (const station of CHINA_STATIONS.filter((item) => isHlsStream(item.streamUrl))) void warmHls(station.id);
-    return { stations: CHINA_STATIONS, countryCode: code, source: "china-curated" };
-  }
+  if (code === "CN") return { stations: CHINA_STATIONS, countryCode: code, source: "china-curated" };
   try {
     const params = new URLSearchParams({ countrycode: code, hidebroken: "true", limit: "80", order: "votes", reverse: "true" });
     const raw = await radioFetch(`/json/stations/search?${params}`);
@@ -243,7 +240,6 @@ app.get("/api/stations", async (request, response) => {
           [station.name, station.country, station.language, ...station.tags].join(" ").toLowerCase().includes(normalizedQuery),
         )
       : CHINA_STATIONS;
-    for (const station of stations.filter((item) => isHlsStream(item.streamUrl))) void warmHls(station.id);
     return response.json({ stations, cached: true, source: "china-curated" });
   }
 
