@@ -2,7 +2,9 @@
 
 [中文](#中文) · [English](#english) · [在线体验](https://radio.qiaomu.ai/)
 
-![乔木电台奥术战歌播放器](public/og-radio.png)
+![乔木电台奥术战歌主题设计概念图](public/og-radio.png)
+
+> 奥术战歌主题的设计概念图；可操作的 3D 模型与实时屏幕请以[线上页面](https://radio.qiaomu.ai/?theme=fantasy)为准。
 
 ## 中文
 
