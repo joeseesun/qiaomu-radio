@@ -290,7 +290,11 @@ if (isDev) {
   const vite = await createViteServer({ root, server: { middlewareMode: true }, appType: "spa" });
   app.use(vite.middlewares);
 } else {
-  app.use(express.static(path.join(root, "dist")));
+  app.use(express.static(path.join(root, "dist"), {
+    setHeaders(response, filePath) {
+      if (/\.(?:glb|png|webp)$/i.test(filePath)) response.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+    },
+  }));
   app.use((_request, response) => response.sendFile(path.join(root, "dist", "index.html")));
 }
 

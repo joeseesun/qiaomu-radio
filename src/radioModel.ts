@@ -83,7 +83,7 @@ export function createRadioModel() {
     grilleShape.holes.push(hole);
   }
   add("speaker-grille", new THREE.ExtrudeGeometry(grilleShape, { depth: .006, bevelEnabled: false, curveSegments: 8 }), face, [-.385, .008, .265], [-.12, 0, .35]);
-  add("speaker-backing", new THREE.PlaneGeometry(1.076, .936), rubber, [-.385, .008, .2645]);
+  const speaker = add("speaker-backing", new THREE.PlaneGeometry(1.076, .936), rubber, [-.385, .008, .2645]);
   device.updateMatrixWorld(true);
-  return { device, parts, knobs };
+  return { device, parts, knobs, speaker };
 }

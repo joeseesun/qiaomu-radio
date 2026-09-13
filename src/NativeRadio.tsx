@@ -10,6 +10,8 @@ import type { NowPlaying } from "./useNowPlaying";
 import { clampVolume, clockwiseArc, detents, TUNING_DETENT, turnVolume, volumeAngle } from "./radioGestures";
 import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPressFeedback";
 import { SupportPanel } from "./SupportPanel";
+import { ZoomOut } from "lucide-react";
+import { speakerExcursion, stepSpeakerMotion } from "./fantasySpeakerMotion";
 
 type Menu = "now" | "menu" | "stations" | "channels" | "favorites" | "history" | "search" | "support" | "explore";
 type Row = { id: string; label: string; action: () => void };
@@ -24,10 +26,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   const [menu, setMenu] = useState<Menu>("now");
   const [selection, setSelection] = useState(0);
   const [preview, setPreview] = useState<string | null>(null);
-  const [simple, setSimple] = useState(false);
   const [exploded, setExploded] = useState(false);
-  const [changedView, setChangedView] = useState(false);
-  const [awake, setAwake] = useState(false);
   const [query, setQuery] = useState("");
   const [adjustingVolume, setAdjustingVolume] = useState(false);
   const rememberedVolume = useRef(.6);
@@ -35,6 +34,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   const physicalVolume = useRef(p.volume);
   physicalVolume.current = muted ? rememberedVolume.current : p.volume;
   const volumeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const tunedStationId = useRef<string | null>(null);
   const candidate = p.stations.find(s => s.id === preview);
   const go = (next: Menu) => { setMenu(next); setSelection(0); setPreview(null); if (next !== "now") view.current?.focus(); };
   const saved = [...new Map([...p.profile.history.map(e=>e.station),...p.stations,...(p.station?[p.station]:[])].map(s=>[s.id,s])).values()];
@@ -48,11 +48,10 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     {id:"support",label:"支持与关注",action:()=>go("support")},
     {id:"like",label:p.liked?"取消收藏当前电台":"收藏当前电台",action:()=>{if(p.station)p.onLike();}},
     {id:"dislike",label:"不喜欢，换一家",action:()=>{if(p.station)p.onDislike();go("now");}},
-    {id:"simple",label:simple?"收起简易控制":"简易控制",action:()=>{setSimple(!simple);go("now");}},
     {id:"explore",label:"探索机身",action:()=>go("explore")},
   ] : menu === "channels" ? [...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:"中国电台",action:()=>{p.onChina();go("now");}}] : menu === "explore" ? [
     {id:"explode",label:exploded?"合上机身":"拆解展示",action:()=>{const next=!exploded;setExploded(next);view.current?.explode(next);}},
-    {id:"reset",label:"恢复收听视角",action:()=>{setExploded(false);view.current?.reset();go("now");}},
+    {id:"reset",label:"恢复正面视角",action:()=>{setExploded(false);view.current?.reset();go("now");}},
     {id:"back",label:"返回菜单",action:()=>go("menu")},
   ] : menu === "support" ? [] : stationRows;
   const current = useRef({p,menu,rows,selection,preview,go});
@@ -68,36 +67,37 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     view.current?.tune(delta);
     if(c.menu!=="now") { setSelection(n=>Math.max(0,Math.min(Math.max(0,c.rows.length-1),n+delta))); return; }
     if(!c.p.stations.length)return;
-    setPreview(previous=>{const i=c.p.stations.findIndex(s=>s.id===(previous||c.p.station?.id));return c.p.stations[(i+delta%c.p.stations.length+c.p.stations.length)%c.p.stations.length].id;});
+    let i=c.p.stations.findIndex(s=>s.id===(tunedStationId.current||c.p.station?.id));
+    if(i<0)i=delta>0?-1:0;
+    const station=c.p.stations[(i+delta%c.p.stations.length+c.p.stations.length)%c.p.stations.length];
+    tunedStationId.current=station.id;setPreview(station.id);c.p.onPlay(station);
   };
-  const confirm = () => {
+  const pressTune = () => {
     const c=current.current;
     if(c.menu!=="now") { c.rows[c.selection]?.action(); return; }
-    const station=c.p.stations.find(s=>s.id===c.preview);
-    if(station){c.p.onPlay(station);setPreview(null);}else c.go("stations");
+    c.p.onToggle();
   };
   const mute = () => {
     if (muted) { setMuted(false); current.current.p.onVolume(rememberedVolume.current); }
     else { rememberedVolume.current=physicalVolume.current; setMuted(true); current.current.p.onVolume(0); }
   };
-  const operations = useRef({tune,confirm,volume,mute}); operations.current={tune,confirm,volume,mute};
-  useEffect(()=>{setPreview(null);},[p.station?.id]);
+  const operations = useRef({tune,pressTune,volume,mute}); operations.current={tune,pressTune,volume,mute};
+  useEffect(()=>{tunedStationId.current=p.station?.id||null;setPreview(null);},[p.station?.id]);
   useEffect(()=>()=>clearTimeout(volumeTimer.current),[]);
-  useEffect(()=>{let timer:ReturnType<typeof setTimeout>;const wake=()=>{setAwake(true);clearTimeout(timer);timer=setTimeout(()=>setAwake(false),4000);};document.addEventListener("pointerdown",wake);document.addEventListener("keydown",wake);return()=>{clearTimeout(timer);document.removeEventListener("pointerdown",wake);document.removeEventListener("keydown",wake);};},[]);
   useEffect(()=>{view.current?.volume(physicalVolume.current);},[p.volume,ready,muted]);
 
   useEffect(()=>{
     const element=host.current!;
     let renderer: THREE.WebGLRenderer;
-    try { renderer=new THREE.WebGLRenderer({alpha:true,antialias:true}); } catch {setFailed(true);return;}
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.toneMapping=THREE.ACESFilmicToneMapping;
+    try { renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"high-performance"}); } catch {setFailed(true);return;}
+    renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.toneMapping=THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure=.95; renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.VSMShadowMap;
     element.appendChild(renderer.domElement);
-    const scene=new THREE.Scene(), {device,parts,knobs}=createRadioModel(); scene.add(device);
+    const scene=new THREE.Scene(), {device,parts,knobs,speaker}=createRadioModel(); scene.add(device);
     const camera=new THREE.PerspectiveCamera(32,1,.02,40);
     let atHome=true;
-    const homeDistance=()=>Math.max(3.35,1.12/(Math.tan(THREE.MathUtils.degToRad(16))*camera.aspect));
-    camera.position.set(.75,.48,homeDistance());
+    const homeDistance=()=>Math.max(2.72,1.05/(Math.tan(THREE.MathUtils.degToRad(16))*camera.aspect));
+    camera.position.set(.34,.22,homeDistance());
     const controls=new OrbitControls(camera,renderer.domElement);
     controls.target.set(0,0,0);controls.enableDamping=true;controls.enablePan=false;
     controls.minDistance=1.3;controls.maxDistance=7;controls.maxPolarAngle=Math.PI*.68;controls.update();
@@ -106,7 +106,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     scene.environment=environment.texture;scene.environmentIntensity=.7;
     scene.add(new THREE.HemisphereLight(0xffffff,0x858678,.7));
     const light=new THREE.DirectionalLight(0xfff8e9,2.2);light.position.set(-3,5,3);light.castShadow=true;
-    light.shadow.mapSize.set(2048,2048);Object.assign(light.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:12});
+    light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.5,far:12});
     light.shadow.normalBias=.015;light.shadow.bias=-.0001;light.shadow.radius=4;light.shadow.blurSamples=8;scene.add(light);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.22,color:0x45503c}));
     floor.rotation.x=-Math.PI/2;floor.position.y=RADIO_FLOOR;floor.receiveShadow=true;scene.add(floor);
@@ -123,8 +123,8 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       camera.position.set(...position);controls.target.set(...lookAt);controls.update();
       controls.enableDamping=damping;
     };
-    const reset=()=>{atHome=true;expansionGoal=0;aim([.75,.48,homeDistance()],[0,0,0]);setChangedView(false);};
-    view.current={reset,focus:()=>{atHome=false;aim([.5646,.39,1.7],[.5646,.25,0]);setChangedView(true);},explode:value=>{atHome=false;expansionGoal=value?1:0;aim([1.5,.65,Math.max(3.8,homeDistance())],[0,0,.1]);setChangedView(true);},volume:value=>{knobs.volume.rotation.z=volumeAngle(value);},tune:delta=>{knobs.tune.rotation.z-=delta*TUNING_DETENT;}};
+    const reset=()=>{atHome=true;expansionGoal=0;aim([.34,.22,homeDistance()],[0,0,0]);};
+    view.current={reset,focus:()=>{atHome=false;aim([.5646,.39,1.7],[.5646,.25,0]);},explode:value=>{atHome=false;expansionGoal=value?1:0;aim([1.5,.65,Math.max(3.8,homeDistance())],[0,0,.1]);},volume:value=>{knobs.volume.rotation.z=volumeAngle(value);},tune:delta=>{knobs.tune.rotation.z-=delta*TUNING_DETENT;}};
     const ray=new THREE.Raycaster();
     const hit=(e:PointerEvent|WheelEvent)=>{const r=element.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);let object:THREE.Object3D|undefined=ray.intersectObjects(device.children,true)[0]?.object;while(object&&!object.userData.action&&object.parent!==device)object=object.parent||undefined;return object;};
     // Intersect a fixed plane in device coordinates, never the rotating knob's frame.
@@ -181,7 +181,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       renderer.domElement.style.cursor=hit(e)?.userData.action?"pointer":"grab";
       if(!active||active.moved)return;
       if(active.action==="power")current.current.p.onToggle();
-      if(active.action==="tune")operations.current.confirm();
+      if(active.action==="tune")operations.current.pressTune();
       if(active.action==="screen")current.current.go("menu");
       if(active.action==="volume")operations.current.mute();
     };
@@ -199,24 +199,27 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
       if(e.key==="ArrowLeft"||e.key==="ArrowRight")operations.current.tune(e.key==="ArrowRight"?1:-1);
       else if(e.key==="ArrowUp"||e.key==="ArrowDown")operations.current.volume(physicalVolume.current+(e.key==="ArrowUp"?.025:-.025));
       else if(e.key===" ")current.current.p.onToggle();
-      else if(e.key==="Enter")operations.current.confirm();
+      else if(e.key==="Enter")operations.current.pressTune();
       else if(e.key==="Home")reset();
       else operations.current.mute();
     };
     renderer.domElement.tabIndex=0;
-    renderer.domElement.setAttribute("aria-label","收音机：左右键调台，Enter 确认，上下键音量，M 静音，空格播放，Home 恢复视角");
-    const orbitStart=()=>{atHome=false;setChangedView(true);renderer.domElement.style.cursor="grabbing";};
+    renderer.domElement.setAttribute("aria-label","收音机：左右键即时调台，Enter 播放暂停，上下键音量，M 静音，Home 恢复视角");
+    const orbitStart=()=>{atHome=false;renderer.domElement.style.cursor="grabbing";};
     const orbitEnd=()=>{renderer.domElement.style.cursor="grab";};
     controls.addEventListener("start",orbitStart);controls.addEventListener("end",orbitEnd);
     renderer.domElement.addEventListener("keydown",key);
     renderer.domElement.addEventListener("pointerdown",down,true);renderer.domElement.addEventListener("pointermove",move,true);renderer.domElement.addEventListener("pointerup",up,true);renderer.domElement.addEventListener("pointercancel",cancel,true);renderer.domElement.addEventListener("lostpointercapture",cancel,true);renderer.domElement.addEventListener("wheel",wheel,{passive:false,capture:true});
-    const resize=new ResizeObserver(()=>{const r=element.getBoundingClientRect();renderer.setSize(r.width,r.height);css.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();if(atHome){camera.position.set(.75,.48,homeDistance());controls.target.set(0,0,0);controls.update();}});resize.observe(element);
+    const resize=new ResizeObserver(()=>{const r=element.getBoundingClientRect();renderer.setSize(r.width,r.height);css.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();if(atHome){camera.position.set(.34,.22,homeDistance());controls.target.set(0,0,0);controls.update();}});resize.observe(element);
     let previousFrame=performance.now();
+    let speakerMotion={level:0,phase:0};
     renderer.setAnimationLoop(time=>{
       const speed=reduced?1:.18,delta=Math.min(Math.max((time-previousFrame)/1000,0),.05);previousFrame=time;controls.update();
       expansion+=(expansionGoal-expansion)*speed;
       for(const action of ["power","tune","volume"]){pressMotion[action]=stepPressMotion(pressMotion[action],gesture?.action===action,delta,reduced);}
       for(const part of parts){part.mesh.position.copy(part.origin).addScaledVector(part.offset,expansion);for(const action of ["power","tune","volume"]){if(part.mesh===knobs[action])part.mesh.position.z-=pressMotion[action].depth;}}
+      speakerMotion=stepSpeakerMotion(speakerMotion,delta,current.current.p.isPlaying&&!current.current.p.isLoading&&current.current.p.volume>0&&!document.hidden,current.current.p.volume,reduced);
+      speaker.position.z+=speakerExcursion(speakerMotion,0);
       const powerMaterial=knobs.power.material as THREE.MeshStandardMaterial;
       powerMaterial.emissive.setHex(0x7a2c08);powerMaterial.emissiveIntensity=current.current.p.isPlaying?.16:pressMotion.power.pulse*.12;
       device.position.y=0;device.updateMatrixWorld(true);bounds.setFromObject(device);
@@ -233,18 +236,16 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   const title=({now:"LIVE RADIO",menu:"乔木电台",stations:"电台列表",channels:"频道",favorites:"收藏",history:"收听历史",search:"搜索",support:"支持与关注",explore:"探索机身"})[menu];
   const start=Math.floor(selection/3)*3;
   const screenUI=<div className="native-screen-content" onKeyDown={e=>{if(e.target instanceof HTMLInputElement)return;if(e.key==="Escape"){go("now");view.current?.reset();}if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();tune(e.key==="ArrowDown"?1:-1);}}}>
-    {menu==="now"?<button className="native-now" aria-label="打开机内菜单" onClick={()=>go("menu")}><span>{candidate?"调谐 · 按旋钮确认":p.station?.name||"QIAOMU / RADIO"}</span><strong>{candidate?.name||track?.title||p.station?.name||"按橙色按钮，开始收听"}</strong><span>{muted?"静音 · 按音量旋钮恢复":adjustingVolume?`音量 ${Math.round(p.volume*100)}%${p.volume===0?" · 最小":p.volume===1?" · 最大":""}` : candidate?.country||track?.artist||"电台直播"}</span><small>{p.error||p.notice||(p.isLoading?"正在连接…":p.isPlaying?"● ON AIR":"Ⅱ STANDBY")}　{p.liked?"♥":""}　MENU ›</small></button>:<>
-      <header><button aria-label="返回收听" onClick={()=>{go("now");view.current?.reset();}}>‹</button><span>{title}</span><button aria-label="返回机内菜单" onClick={()=>go("menu")}>≡</button></header>
+    {menu==="now"?<button className="native-now" aria-label="打开机内菜单" onClick={()=>go("menu")}><span>{candidate?"调谐 · 正在切换":p.station?.name||"QIAOMU / RADIO"}</span><strong>{candidate?.name||track?.title||p.station?.name||"按橙色按钮，开始收听"}</strong><span>{muted?"静音 · 按音量旋钮恢复":adjustingVolume?`音量 ${Math.round(p.volume*100)}%${p.volume===0?" · 最小":p.volume===1?" · 最大":""}` : candidate?.country||track?.artist||"电台直播"}</span><small>{p.error||p.notice||(p.isLoading?"正在连接…":p.isPlaying?"● ON AIR":"Ⅱ STANDBY")}　{p.liked?"♥":""}　MENU ›</small></button>:<>
+      <header><button aria-label="恢复原始视角" onClick={()=>{setExploded(false);go("now");view.current?.reset();}}><ZoomOut size={18}/></button><span>{title}</span><button aria-label="返回机内菜单" onClick={()=>go("menu")}>≡</button></header>
       {menu==="search"?<form onSubmit={e=>{e.preventDefault();p.onSearch(query.trim());go("stations");}}><input aria-label="电台名称" placeholder="电台名称…" value={query} onChange={e=>setQuery(e.target.value)}/><button>搜索</button></form>:menu==="support"?<SupportPanel/>:<div className="native-menu-rows" onWheel={e=>{e.stopPropagation();tune(Math.sign(e.deltaY));}}>{rows.slice(start,start+3).map((row,i)=><button key={row.id} aria-current={selection===start+i?"true":undefined} onFocus={()=>setSelection(start+i)} onClick={row.action}><span>{row.label}</span><span>›</span></button>)}{!rows.length&&<p>{p.isLoading?"正在寻找电台…":p.error||"暂无电台，返回选择频道"}</p>}</div>}
       {rows.length>3&&menu!=="search"&&menu!=="support"&&<nav><button aria-label="上一页电台菜单" disabled={selection<3} onClick={()=>setSelection(Math.max(0,selection-3))}>↑</button><span>{Math.floor(selection/3)+1}/{Math.ceil(rows.length/3)}</span><button aria-label="下一页电台菜单" disabled={start+3>=rows.length} onClick={()=>setSelection(Math.min(rows.length-1,selection+3))}>↓</button></nav>}
     </>}
   </div>;
-  return <section className="native-radio" aria-label="Rams 原生收音机">
+  return <section className="native-radio" aria-label="博朗 3D 收音机">
     <div className="native-stage" ref={host}/>
     {failed?<div className="native-glass native-flat-screen">{screenUI}</div>:createPortal(screenUI,screenElement)}
-    {!ready&&<p className="native-loading" role="status">{failed?"3D 渲染暂不可用，请使用简易控制。":"正在载入收音机…"}</p>}
-    <div className={`native-access ${awake?"is-awake":"is-asleep"}`}><button onClick={()=>{setSimple(!simple);}}>{simple?"收起简易控制":"简易控制"}</button>{changedView&&<button onClick={()=>{setExploded(false);view.current?.reset();go("now");}}>恢复视角</button>}{exploded&&<button onClick={()=>{setExploded(false);view.current?.explode(false);}}>合上机身</button>}</div>
-    {(simple||failed)&&<div className="native-simple" aria-label="简易控制"><strong>{track?.title||p.station?.name||"乔木电台"}</strong><span>{track?.artist||"电台直播"}</span><div><button onClick={p.onPrevious}>上一家</button><button onClick={p.onToggle}>{p.isPlaying?"暂停":"播放"}</button><button onClick={p.onNext}>下一家</button><button onClick={()=>go("menu")}>机内菜单</button></div><label>音量<input type="range" min="0" max="1" step=".01" value={p.volume} onChange={e=>volume(Number(e.target.value))}/></label>{failed&&<form onSubmit={e=>{e.preventDefault();p.onSearch(query);}}><input aria-label="备用搜索电台" value={query} onChange={e=>setQuery(e.target.value)}/><button>搜索</button></form>}{failed&&p.stations.slice(0,8).map(s=><button key={s.id} onClick={()=>p.onPlay(s)}>{s.name}</button>)}{p.error&&<p role="alert">{p.error}<button onClick={p.onRetry}>重试</button></p>}</div>}
-    <span className="native-sr" role="status">{p.error||(candidate?`预选 ${candidate.name}，按旋钮确认`:`${p.isPlaying?"正在播放":"已暂停"} ${track?.title||p.station?.name||""}`)}</span>
+    {!ready&&!failed&&<div className="native-loading" role="status" aria-label="正在载入博朗 3D 收音机"/>}
+    <span className="native-sr" role="status">{p.error||(candidate?`正在切换到 ${candidate.name}`:`${p.isPlaying?"正在播放":"已暂停"} ${track?.title||p.station?.name||""}`)}</span>
   </section>;
 }

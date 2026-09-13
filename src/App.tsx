@@ -16,7 +16,7 @@ const MOODS: Array<{ id: MoodId; label: string; note: string; accent: string }> 
 ];
 
 const STORAGE_KEY = "qiaomu-radio-profile-v1";
-const THEME_KEY = "qiaomu-radio-theme-v1";
+const THEME_KEY = "qiaomu-radio-theme-v2";
 const MAX_AUTOPLAY_ATTEMPTS = 5;
 
 function loadProfile(): TasteProfile {
@@ -29,7 +29,7 @@ function loadProfile(): TasteProfile {
 function loadTheme(): ThemeId {
   const fromUrl = new URLSearchParams(window.location.search).get("theme") as ThemeId | null;
   const persisted = localStorage.getItem(THEME_KEY) as ThemeId | null;
-  return getTheme(fromUrl || persisted || "pocket").id;
+  return getTheme(fromUrl || persisted || "rams").id;
 }
 
 function isHlsUrl(url: string) { return /\.m3u8(?:$|\?)/i.test(url); }
