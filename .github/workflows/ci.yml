@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Verify Obsidian release files
+        run: |
+          test -s main.js
+          test -s manifest.json
+          test -s styles.css
+          test "$(node -p "require('./manifest.json').version")" = "$(node -p "require('./package.json').version")"
+          test "$(wc -c < main.js)" -lt 5000000

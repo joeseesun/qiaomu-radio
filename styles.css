@@ -1,0 +1,514 @@
+.qiaomu-radio {
+  --qr-accent: #d96c3f;
+  --qr-accent-soft: color-mix(in srgb, var(--qr-accent) 14%, transparent);
+  --qr-surface: color-mix(in srgb, var(--background-primary) 92%, var(--text-normal));
+  --qr-surface-raised: color-mix(in srgb, var(--background-primary) 97%, var(--text-normal));
+  --qr-line: color-mix(in srgb, var(--text-normal) 13%, transparent);
+  height: 100%;
+  overflow: auto;
+  container-type: inline-size;
+  background:
+    radial-gradient(circle at 8% 0%, var(--qr-accent-soft), transparent 30rem),
+    var(--background-primary);
+  color: var(--text-normal);
+}
+
+.qiaomu-radio__shell {
+  width: min(100%, 1080px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: clamp(18px, 3vw, 42px);
+  box-sizing: border-box;
+}
+
+.qiaomu-radio__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.qiaomu-radio__identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.qiaomu-radio__identity h1,
+.qiaomu-radio__identity p,
+.qiaomu-radio__on-air h2,
+.qiaomu-radio__on-air p,
+.qiaomu-radio__on-air small,
+.qiaomu-radio__section-heading h2,
+.qiaomu-radio__notice,
+.qiaomu-radio__empty {
+  margin: 0;
+}
+
+.qiaomu-radio__identity h1 {
+  font-size: clamp(21px, 3vw, 30px);
+  letter-spacing: -.04em;
+  line-height: 1.1;
+}
+
+.qiaomu-radio__identity p {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.qiaomu-radio__signal {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid var(--qr-line);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--qr-accent) 0 12%, transparent 13% 28%, var(--qr-accent) 29% 33%, transparent 34% 48%, var(--qr-accent) 49% 53%, transparent 54%),
+    var(--qr-surface-raised);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--background-modifier-box-shadow) 40%, transparent);
+}
+
+.qiaomu-radio__search {
+  display: flex;
+  align-items: center;
+  width: min(390px, 44%);
+  gap: 8px;
+}
+
+.qiaomu-radio__search input {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.qiaomu-radio__search button,
+.qiaomu-radio__channels button,
+.qiaomu-radio__controls button,
+.qiaomu-radio__empty button {
+  min-height: 36px;
+  border: 1px solid var(--qr-line);
+  border-radius: 999px;
+  background: var(--qr-surface-raised);
+  color: var(--text-normal);
+  box-shadow: none;
+}
+
+.qiaomu-radio__search button:hover,
+.qiaomu-radio__channels button:hover,
+.qiaomu-radio__controls button:hover,
+.qiaomu-radio__empty button:hover {
+  border-color: color-mix(in srgb, var(--qr-accent) 50%, var(--qr-line));
+  background: var(--qr-accent-soft);
+}
+
+.qiaomu-radio__quiet-button {
+  color: var(--text-muted) !important;
+}
+
+.qiaomu-radio__player {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(20px, 4vw, 38px);
+  border: 1px solid var(--qr-line);
+  border-radius: 26px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--qr-accent) 18%, transparent), transparent 45%),
+    var(--qr-surface);
+  box-shadow: 0 22px 70px color-mix(in srgb, var(--background-modifier-box-shadow) 38%, transparent);
+}
+
+.qiaomu-radio__player::after {
+  content: "";
+  position: absolute;
+  right: -55px;
+  bottom: -75px;
+  width: 230px;
+  height: 230px;
+  border: 38px solid color-mix(in srgb, var(--qr-accent) 10%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.qiaomu-radio__player-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.qiaomu-radio__on-air {
+  min-width: 0;
+}
+
+.qiaomu-radio__on-air > span {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--qr-accent);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .16em;
+}
+
+.qiaomu-radio__on-air h2 {
+  max-width: 620px;
+  overflow: hidden;
+  font-size: clamp(25px, 5vw, 48px);
+  letter-spacing: -.045em;
+  line-height: 1.03;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qiaomu-radio__on-air p {
+  margin-top: 10px;
+  color: var(--text-muted);
+}
+
+.qiaomu-radio__on-air small {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-faint);
+}
+
+.qiaomu-radio__controls {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 9px;
+}
+
+.qiaomu-radio__controls .qiaomu-radio__primary-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: none;
+  background: var(--qr-accent);
+  color: white;
+}
+
+.qiaomu-radio__controls .qiaomu-radio__primary-control:hover {
+  background: color-mix(in srgb, var(--qr-accent) 86%, white);
+}
+
+.qiaomu-radio__controls .qiaomu-radio__primary-control svg {
+  width: 22px;
+  height: 22px;
+}
+
+.qiaomu-radio__volume {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(120px, 300px) 42px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.qiaomu-radio__volume input {
+  width: 100%;
+  accent-color: var(--qr-accent);
+}
+
+.qiaomu-radio__channels {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.qiaomu-radio__channels::-webkit-scrollbar {
+  display: none;
+}
+
+.qiaomu-radio__channels button {
+  flex: 0 0 auto;
+  padding-inline: 15px;
+  color: var(--text-muted);
+}
+
+.qiaomu-radio__channels button.is-active {
+  border-color: color-mix(in srgb, var(--qr-accent) 48%, transparent);
+  background: var(--qr-accent-soft);
+  color: var(--text-normal);
+  font-weight: 650;
+}
+
+.qiaomu-radio__section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.qiaomu-radio__section-heading h2 {
+  font-size: 16px;
+}
+
+.qiaomu-radio__section-heading span,
+.qiaomu-radio__notice {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.qiaomu-radio__notice {
+  margin-bottom: 12px;
+}
+
+.qiaomu-radio__station-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.qiaomu-radio__station {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 70px;
+  border: 1px solid var(--qr-line);
+  border-radius: 16px;
+  background: var(--qr-surface-raised);
+  transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.qiaomu-radio__station:hover {
+  border-color: color-mix(in srgb, var(--qr-accent) 38%, var(--qr-line));
+  transform: translateY(-1px);
+}
+
+.qiaomu-radio__station.is-current {
+  border-color: color-mix(in srgb, var(--qr-accent) 58%, transparent);
+  background: var(--qr-accent-soft);
+}
+
+.qiaomu-radio__station-main {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 68px;
+  flex: 1;
+  gap: 12px;
+  padding: 10px 8px 10px 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  text-align: start;
+}
+
+.qiaomu-radio__station-main:hover {
+  background: transparent;
+}
+
+.qiaomu-radio__monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--qr-accent) 16%, var(--background-secondary));
+  color: var(--qr-accent);
+  font-weight: 750;
+}
+
+.qiaomu-radio__station-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qiaomu-radio__station-copy strong,
+.qiaomu-radio__station-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qiaomu-radio__station-copy span {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.qiaomu-radio__like {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 8px;
+  padding: 0;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+.qiaomu-radio__like:hover,
+.qiaomu-radio__like.is-liked {
+  background: var(--qr-accent-soft);
+  color: var(--qr-accent);
+}
+
+.qiaomu-radio__like.is-liked svg {
+  fill: currentColor;
+}
+
+.qiaomu-radio__empty {
+  padding: 48px 24px;
+  border: 1px dashed var(--qr-line);
+  border-radius: 18px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.qiaomu-radio__empty button {
+  display: block;
+  margin: 14px auto 0;
+}
+
+.qiaomu-radio__sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.qiaomu-radio button:focus-visible,
+.qiaomu-radio input:focus-visible,
+.qiaomu-radio-settings__links a:focus-visible {
+  outline: 2px solid var(--qr-accent);
+  outline-offset: 2px;
+}
+
+.qiaomu-radio-settings__about {
+  margin-top: 30px;
+  padding: 18px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.qiaomu-radio-settings__about h3,
+.qiaomu-radio-settings__about p {
+  margin-top: 0;
+}
+
+.qiaomu-radio-settings__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .qiaomu-radio__shell {
+    padding: 16px;
+  }
+
+  .qiaomu-radio__header,
+  .qiaomu-radio__player-top {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qiaomu-radio__search {
+    width: 100%;
+  }
+
+  .qiaomu-radio__controls {
+    justify-content: center;
+  }
+
+  .qiaomu-radio__on-air h2 {
+    white-space: normal;
+  }
+
+  .qiaomu-radio__station-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 600px) {
+  .qiaomu-radio__shell {
+    padding: 16px;
+  }
+
+  .qiaomu-radio__header,
+  .qiaomu-radio__player-top {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qiaomu-radio__search {
+    width: 100%;
+  }
+
+  .qiaomu-radio__controls {
+    justify-content: center;
+  }
+
+  .qiaomu-radio__on-air h2 {
+    white-space: normal;
+  }
+
+  .qiaomu-radio__station-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 430px) {
+  .qiaomu-radio__identity p {
+    display: none;
+  }
+
+  .qiaomu-radio__player {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .qiaomu-radio__controls {
+    width: 100%;
+  }
+
+  .qiaomu-radio__controls button {
+    min-height: 44px;
+    flex: 1;
+  }
+
+  .qiaomu-radio__controls .qiaomu-radio__primary-control {
+    flex: 0 0 54px;
+  }
+
+  .qiaomu-radio__volume {
+    grid-template-columns: auto minmax(80px, 1fr) 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qiaomu-radio__station {
+    transition: none;
+  }
+}
