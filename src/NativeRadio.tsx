@@ -12,8 +12,9 @@ import { pulsePressMotion, stepPressMotion, type PressMotion } from "./radioPres
 import { SupportPanel } from "./SupportPanel";
 import { ZoomOut } from "lucide-react";
 import { LOCALES, LOCALE_LABELS, regionName, useI18n } from "./i18n";
+import { RADIO_REGIONS } from "./regions";
 
-type Menu = "now" | "menu" | "stations" | "channels" | "favorites" | "history" | "search" | "support" | "explore" | "language";
+type Menu = "now" | "menu" | "stations" | "channels" | "regions" | "favorites" | "history" | "search" | "support" | "explore" | "language";
 type Row = { id: string; label: string; action: () => void };
 type View = { reset: () => void; focus: () => void; explode: (value: boolean) => void; volume: (value: number) => void; tune: (delta: number) => void };
 
@@ -37,12 +38,16 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
   const volumeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const tunedStationId = useRef<string | null>(null);
   const candidate = p.stations.find(s => s.id === preview);
-  const go = (next: Menu) => { setMenu(next); setSelection(0); setPreview(null); if (next !== "now") view.current?.focus(); };
+  const selectedRegion = p.preferredCountryCode
+    ? Math.max(0, RADIO_REGIONS.findIndex((code) => code === p.preferredCountryCode) + 1)
+    : 0;
+  const go = (next: Menu) => { setMenu(next); setSelection(next === "regions" ? selectedRegion : 0); setPreview(null); if (next !== "now") view.current?.focus(); };
   const saved = [...new Map([...p.profile.history.map(e=>e.station),...p.stations,...(p.station?[p.station]:[])].map(s=>[s.id,s])).values()];
   const stationRows = (menu === "favorites" ? saved.filter(s=>p.profile.likedStationIds.includes(s.id)) : menu === "history" ? p.profile.history.map(e=>e.station) : p.stations).map(s=>({ id:s.id,label:s.name,action:()=>{p.onPlay(s);go("now");} }));
   const rows: Row[] = menu === "menu" ? [
     {id:"stations",label:t("page.stations"),action:()=>go("stations")},
     {id:"channels",label:t("page.channels"),action:()=>go("channels")},
+    {id:"regions",label:t("page.regions"),action:()=>go("regions")},
     {id:"search",label:t("page.search"),action:()=>go("search")},
     {id:"favorites",label:t("page.favorites"),action:()=>go("favorites")},
     {id:"history",label:t("page.history"),action:()=>go("history")},
@@ -51,7 +56,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     {id:"like",label:p.liked?t("action.unfavoriteCurrent"):t("action.favoriteCurrent"),action:()=>{if(p.station)p.onLike();}},
     {id:"dislike",label:t("action.dislike"),action:()=>{if(p.station)p.onDislike();go("now");}},
     {id:"explore",label:t("action.explore"),action:()=>go("explore")},
-  ] : menu === "channels" ? [{id:"global",label:t("search.global"),action:()=>{p.onGlobal();go("now");}},...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:t("search.china"),action:()=>{p.onChina();go("now");}}] : menu === "language" ? LOCALES.map(item=>({id:item,label:`${item===locale?"✓ ":""}${LOCALE_LABELS[item]}`,action:()=>{setLocale(item);go("menu");}})) : menu === "explore" ? [
+  ] : menu === "channels" ? [{id:"global",label:t("search.global"),action:()=>{p.onGlobal();go("now");}},...p.moods.map(m=>({id:m.id,label:m.label,action:()=>{p.onMood(m.id);go("now");}})),{id:"china",label:t("search.china"),action:()=>{p.onChina();go("now");}}] : menu === "regions" ? [{id:"auto",label:`${p.preferredCountryCode?"":"✓ "}${t("region.auto")}`,action:()=>{p.onRegion(null);go("now");}},...RADIO_REGIONS.map(code=>({id:code,label:`${p.preferredCountryCode===code?"✓ ":""}${regionName(locale,code,code)}`,action:()=>{p.onRegion(code);go("now");}}))] : menu === "language" ? LOCALES.map(item=>({id:item,label:`${item===locale?"✓ ":""}${LOCALE_LABELS[item]}`,action:()=>{setLocale(item);go("menu");}})) : menu === "explore" ? [
     {id:"explode",label:exploded?t("action.collapse"):t("action.explode"),action:()=>{const next=!exploded;setExploded(next);view.current?.explode(next);}},
     {id:"reset",label:t("action.restore"),action:()=>{setExploded(false);view.current?.reset();go("now");}},
     {id:"back",label:t("action.back"),action:()=>go("menu")},
@@ -233,7 +238,7 @@ export default function NativeRadio({ player: p, track }: { player: PlayerProps;
     return()=>{view.current=null;resize.disconnect();renderer.setAnimationLoop(null);controls.removeEventListener("start",orbitStart);controls.removeEventListener("end",orbitEnd);controls.dispose();renderer.domElement.removeEventListener("keydown",key);renderer.domElement.removeEventListener("pointerdown",down,true);renderer.domElement.removeEventListener("pointermove",move,true);renderer.domElement.removeEventListener("pointerup",up,true);renderer.domElement.removeEventListener("pointercancel",cancel,true);renderer.domElement.removeEventListener("lostpointercapture",cancel,true);renderer.domElement.removeEventListener("wheel",wheel,true);disposeTree(scene);environment.dispose();room.dispose();pmrem.dispose();renderer.dispose();renderer.domElement.remove();css.domElement.remove();};
   },[screenElement]);
 
-  const title=({now:"LIVE RADIO",menu:t("page.menu"),stations:t("page.stations"),channels:t("page.channels"),favorites:t("page.favorites"),history:t("page.history"),search:t("page.search"),support:t("page.support"),explore:"EXPLORE",language:t("page.language")})[menu];
+  const title=({now:"LIVE RADIO",menu:t("page.menu"),stations:t("page.stations"),channels:t("page.channels"),regions:t("page.regions"),favorites:t("page.favorites"),history:t("page.history"),search:t("page.search"),support:t("page.support"),explore:"EXPLORE",language:t("page.language")})[menu];
   const start=Math.floor(selection/3)*3;
   const screenUI=<div className="native-screen-content" onKeyDown={e=>{if(e.target instanceof HTMLInputElement)return;if(e.key==="Escape"){go("now");view.current?.reset();}if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();tune(e.key==="ArrowDown"?1:-1);}}}>
     {menu==="now"?<button className="native-now" aria-label={t("action.menu")} onClick={()=>go("menu")}><span>{candidate?.name||p.station?.name||"QIAOMU / RADIO"}</span><strong>{candidate?.name||track?.title||p.station?.name||t("now.prompt")}</strong><span>{adjustingVolume?`${t("action.volume")} ${Math.round(p.volume*100)}%`:candidate?regionName(locale,candidate.countryCode,candidate.country):p.station?regionName(locale,p.station.countryCode,p.station.country):track?.artist||t("live.radio")}</span><small>{p.error||p.notice||(p.isLoading?t("status.connecting"):p.isPlaying?"● ON AIR":"Ⅱ STANDBY")}　{p.liked?"♥":""}　MENU ›</small></button>:<>

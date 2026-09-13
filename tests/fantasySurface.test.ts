@@ -5,13 +5,14 @@ import { bindFantasySpeakers, FANTASY_SPEAKERS } from "../src/fantasySurface";
 import { bindFantasyPress, fantasyActionAt, FANTASY_CONTROLS, FANTASY_SCREEN, normalizeFantasyModel, surfacePatch, surfacePoint } from "../src/fantasySurface";
 
 // Read only the geometry from the shipped GLB; no DOM, texture decoding or network needed.
-const bytes=readFileSync(new URL("../public/models/qiaomu-fantasy-radio-hyper3d-v1.glb",import.meta.url));
+const bytes=readFileSync(new URL("../public/models/qiaomu-fantasy-radio-hyper3d-v2.glb",import.meta.url));
 const length=bytes.readUInt32LE(12), json=JSON.parse(bytes.subarray(20,20+length).toString()), start=length+28;
 const attribute=(index:number,size:number)=>{
   const a=json.accessors[index],v=json.bufferViews[a.bufferView],offset=bytes.byteOffset+start+(v.byteOffset||0)+(a.byteOffset||0);
   return new THREE.BufferAttribute(a.componentType===5126?new Float32Array(bytes.buffer,offset,a.count*size).slice():new Uint16Array(bytes.buffer,offset,a.count*size).slice(),size);
 };
-const geometry=new THREE.BufferGeometry();geometry.setAttribute("position",attribute(0,3));geometry.setIndex(attribute(3,1));
+const primitive=json.meshes[0].primitives[0];
+const geometry=new THREE.BufferGeometry();geometry.setAttribute("position",attribute(primitive.attributes.POSITION,3));geometry.setIndex(attribute(primitive.indices,1));
 const model=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial());normalizeFantasyModel(model);
 afterAll(()=>{geometry.dispose();model.material.dispose();});
 

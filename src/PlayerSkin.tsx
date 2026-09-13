@@ -6,8 +6,9 @@ import type { MoodId, Station, StationSource, TasteProfile, ThemeId } from "./ty
 import { SupportPanel } from "./SupportPanel";
 import { ModelLoader } from "./ModelLoader";
 import { LOCALES, LOCALE_LABELS, regionName, useI18n, type MessageKey } from "./i18n";
+import { RADIO_REGIONS } from "./regions";
 
-type Page = "now" | "menu" | "channels" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
+type Page = "now" | "menu" | "channels" | "regions" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
 export type PlayerProps = {
   theme: ThemeId;
   station: Station | null;
@@ -32,6 +33,8 @@ export type PlayerProps = {
   onSearch: (query: string) => void;
   onChina: () => void;
   onGlobal: () => void;
+  onRegion: (countryCode: string | null) => void;
+  preferredCountryCode: string | null;
   onVolume: (volume: number) => void;
   onRetry: () => void;
 };
@@ -41,7 +44,7 @@ const FantasyRadio = lazy(() => import("./RamsRadio"));
 
 export function PlayerSkin(props: PlayerProps) {
   const { locale, setLocale, t } = useI18n();
-  const titles: Record<Page, string> = { now:t("page.now"),menu:t("page.menu"),channels:t("page.channels"),stations:t("page.stations"),favorites:t("page.favorites"),history:t("page.history"),search:t("page.search"),info:t("page.info"),support:t("page.support"),language:t("page.language") };
+  const titles: Record<Page, string> = { now:t("page.now"),menu:t("page.menu"),channels:t("page.channels"),regions:t("page.regions"),stations:t("page.stations"),favorites:t("page.favorites"),history:t("page.history"),search:t("page.search"),info:t("page.info"),support:t("page.support"),language:t("page.language") };
   const { theme, station, isPlaying, isLoading, volume, liked } = props;
   const [page, setPage] = useState<Page>("now");
   const [selected, setSelected] = useState(0);
@@ -54,13 +57,17 @@ export function PlayerSkin(props: PlayerProps) {
   const label = pocket ? "iPod" : deck ? "Winamp" : consoleSkin ? "foobar2000" : t(`theme.${theme}` as MessageKey);
   const status = isLoading ? t("status.connecting") : isPlaying ? t("status.live") : t("status.paused");
 
-  const open = (next: Page) => { setPage(next); setSelected(0); };
+  const selectedRegion = props.preferredCountryCode
+    ? Math.max(0, RADIO_REGIONS.findIndex((code) => code === props.preferredCountryCode) + 1)
+    : 0;
+  const open = (next: Page) => { setPage(next); setSelected(next === "regions" ? selectedRegion : 0); };
   const back = () => open(page === "now" ? "menu" : page === "menu" ? "now" : "menu");
   const saved = [...new Map([...props.profile.history.map((entry) => entry.station), ...props.stations, ...(station ? [station] : [])].map((item) => [item.id, item])).values()];
   const stationList = page === "favorites" ? saved.filter((item) => props.profile.likedStationIds.includes(item.id)) : page === "history" ? props.profile.history.map((entry) => entry.station) : props.stations;
   const menu = [
     { label: t("page.now"), action: () => open("now") },
     { label: t("page.channels"), action: () => open("channels") },
+    { label: t("page.regions"), action: () => open("regions") },
     { label: t("page.stations"), action: () => open("stations") },
     { label: t("page.search"), action: () => open("search") },
     { label: t("page.favorites"), action: () => open("favorites") },
@@ -75,12 +82,16 @@ export function PlayerSkin(props: PlayerProps) {
     { label: t("search.china"), action: () => { props.onChina(); open("now"); } },
   ];
   const localeRows = LOCALES.map((item) => ({ label: `${item === locale ? "✓ " : ""}${LOCALE_LABELS[item]}`, action: () => { setLocale(item); open("menu"); } }));
-  const rows = page === "menu" ? menu : page === "channels" ? channelRows : page === "language" ? localeRows : stationList.map((item) => ({
+  const regionRows = [
+    { label: `${props.preferredCountryCode ? "" : "✓ "}${t("region.auto")}`, action: () => { props.onRegion(null); open("now"); } },
+    ...RADIO_REGIONS.map((code) => ({ label: `${props.preferredCountryCode === code ? "✓ " : ""}${regionName(locale, code, code)}`, action: () => { props.onRegion(code); open("now"); } })),
+  ];
+  const rows = page === "menu" ? menu : page === "channels" ? channelRows : page === "regions" ? regionRows : page === "language" ? localeRows : stationList.map((item) => ({
     label: item.name,
     note: regionName(locale,item.countryCode,item.country),
     action: () => { props.onPlay(item); open("now"); },
   }));
-  const listPage = ["menu", "channels", "stations", "favorites", "history", "language"].includes(page);
+  const listPage = ["menu", "channels", "regions", "stations", "favorites", "history", "language"].includes(page);
 
   useEffect(() => {
     screenRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" });
