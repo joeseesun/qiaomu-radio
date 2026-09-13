@@ -150,13 +150,11 @@ button:active { filter: brightness(.93); }
 .fantasy-experience canvas:focus-visible { outline: 1px solid #c49c58; outline-offset: 4px; border-radius: 12px; }
 .model-loader { display: grid; place-items: center; margin: auto; }
 .model-loader-rams { width: 36px; height: 36px; border: 2px solid #aeb5a7; border-top-color: #c96f43; border-radius: 50%; animation: loader-spin 1s linear infinite; }
-.model-loader-fantasy { --model-progress: 8%; position: absolute; z-index: 4; top: 50%; left: 50%; width: 156px; height: 156px; translate: -50% -50%; filter: drop-shadow(0 0 22px #187ee084); }
+.model-loader-fantasy { --model-progress: 8%; position: absolute; z-index: 4; top: 50%; left: 50%; width: 156px; height: 156px; translate: -50% -50%; }
 .model-loader-fantasy img { position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain; animation: loader-rune 3.2s cubic-bezier(.45,0,.55,1) infinite; }
-.model-loader-progress { position: absolute; z-index: 1; inset: 7px; border-radius: 50%; background: conic-gradient(#49aaff var(--model-progress),#d8642820 0); -webkit-mask: radial-gradient(circle,transparent 57%,#000 59%); mask: radial-gradient(circle,transparent 57%,#000 59%); filter: drop-shadow(0 0 7px #3ca8ff); transition: background .25s ease-out; }
-.model-loader-core { position: absolute; z-index: 3; width: 30px; height: 30px; border-radius: 42% 58% 48% 52%; background: #c8f3ff; box-shadow: 0 0 16px #48b7ff,0 0 38px #186fe0; animation: loader-core 1.25s ease-in-out infinite alternate; }
+.model-loader-progress { position: absolute; z-index: 1; inset: 7px; border-radius: 50%; background: conic-gradient(#e2b45e var(--model-progress),transparent 0); -webkit-mask: radial-gradient(circle,transparent 57%,#000 59%); mask: radial-gradient(circle,transparent 57%,#000 59%); transition: background .25s ease-out; }
 @keyframes loader-spin { to { rotate: 360deg; } }
 @keyframes loader-rune { 0%,100% { rotate: -3deg; transform: scale(.96); } 50% { rotate: 3deg; transform: scale(1); } }
-@keyframes loader-core { to { transform: scale(.72) rotate(18deg); opacity: .62; } }
 .fantasy-glass { width: 780px; height: 268px; border-radius: 34px; overflow: hidden; background: #10171b; color: #eee1c5; pointer-events: auto; --ink: #e1c593; --selected-text: #161b1e; font: 32px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
 .fantasy-flat-screen { width: min(100%,640px); height: min(310px,55svh); margin: 0 auto; font-size: 18px; }
 .fantasy-glass ::selection { background: #b99450; color: #111b21; }
