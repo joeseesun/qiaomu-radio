@@ -113,7 +113,7 @@ export default class QiaomuRadioPlugin extends Plugin {
   private refreshViews(): void {
     this.app.workspace.getLeavesOfType(RADIO_VIEW_TYPE).forEach((leaf: WorkspaceLeaf) => {
       const view = leaf.view;
-      if (view instanceof QiaomuRadioView) view.refreshProfile();
+      if (view.getViewType() === RADIO_VIEW_TYPE) (view as QiaomuRadioView).refreshProfile();
     });
   }
 
