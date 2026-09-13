@@ -1,0 +1,6 @@
+.qiaomu/launch-state.json
+node_modules/
+dist/
+.DS_Store
+npm-debug.log*
+*.tsbuildinfo

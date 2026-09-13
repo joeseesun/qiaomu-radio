@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全问题
+    url: https://github.com/joeseesun/qiaomu-radio/security/advisories/new
+    about: 请私密报告安全漏洞

@@ -1,0 +1,37 @@
+name: Bug 报告
+description: 报告可以稳定复现的问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: 感谢反馈。请勿在此提交密钥或私密数据。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题
+      description: 实际发生了什么？
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器与版本
+  - type: dropdown
+    id: theme
+    attributes:
+      label: 播放器主题
+      options:
+        - 奥术战歌 3D
+        - Rams 3D
+        - 极简
+        - iPod
+        - Winamp
+        - foobar2000
+        - 经典收音机

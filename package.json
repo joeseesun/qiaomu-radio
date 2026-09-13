@@ -1,0 +1,43 @@
+{
+  "name": "qiaomu-radio",
+  "version": "0.1.0",
+  "description": "一台可真实操作的 3D 网络电台：在完整播放器主题中发现全球直播电台。",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "author": "向阳乔木 (https://x.com/vista8)",
+  "homepage": "https://radio.qiaomu.ai/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeseesun/qiaomu-radio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joeseesun/qiaomu-radio/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs --dev",
+    "build": "tsc -b && vite build",
+    "start": "node server.mjs",
+    "test": "vitest run",
+    "check": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "hls.js": "^1.7.3",
+    "lucide-react": "^1.45.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "three": "^0.186.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  }
+}
