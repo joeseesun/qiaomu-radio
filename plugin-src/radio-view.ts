@@ -422,8 +422,12 @@ export class QiaomuRadioView extends ItemView {
     });
 
     const results = directory.createDiv({ cls: "qiaomu-radio__results" });
+    // The submit action only earns its place once there is something to search for;
+    // toggling it here keeps the rule out of CSS, where :has triggers a lint warning.
+    const syncSubmit = (): void => { submit.hidden = input.value.trim().length === 0; };
     input.addEventListener("input", () => {
       this.filterQuery = input.value.slice(0, 80);
+      syncSubmit();
       this.renderStationResults(results);
     });
     form.addEventListener("submit", (event) => {
@@ -434,6 +438,7 @@ export class QiaomuRadioView extends ItemView {
       void this.loadStations();
     });
     submit.disabled = this.loading;
+    syncSubmit();
     this.renderStationResults(results);
   }
 
