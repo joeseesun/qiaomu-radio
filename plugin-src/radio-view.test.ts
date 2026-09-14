@@ -390,6 +390,22 @@ describe("original player view", () => {
     expect(plugin.setTheme).toHaveBeenCalledWith("pocket");
   });
 
+  it("only offers the global search action once the field has a query", async () => {
+    const { root } = await mount({ theme: "classic", stations: [station("a", "Radio A")] });
+    const submit = flat(root).find((node) => node.tagName === "button" && node.textContent === "搜索全球");
+    expect(submit).toBeDefined();
+    expect(submit.hidden).toBe(true);
+
+    const input = flat(root).find((node) => node.attributes.type === "search");
+    input.value = "jazz";
+    input.dispatch("input");
+    expect(submit.hidden).toBe(false);
+
+    input.value = "  ";
+    input.dispatch("input");
+    expect(submit.hidden).toBe(true);
+  });
+
   it("keeps every rendered element free of generated hover tips", async () => {
     for (const theme of ["classic", "pocket"]) {
       const { root } = await mount({ theme, stations: [station("a", "Radio A")] });

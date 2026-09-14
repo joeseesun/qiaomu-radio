@@ -350,7 +350,7 @@
 
 .qiaomu-radio__search button:hover { color: var(--qr-accent); }
 
-.qiaomu-radio__search:has(input:placeholder-shown) button { display: none; }
+.qiaomu-radio__search button[hidden] { display: none; }
 
 .qiaomu-radio__empty button {
   min-height: 32px;
