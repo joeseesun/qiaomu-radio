@@ -7,12 +7,16 @@ All notable changes to Qiaomu Radio are documented here.
 ### Changed
 
 - The original player is now fully immersive: no inner title bar, frame, corner radius or shadow, and it fills the Obsidian content area edge to edge. Only the tab keeps the plugin name.
-- The station list is one stable table instead of grey cards: position and playing state, station name, country and genre, quality, and favourite. The whole row plays, and the current station uses the accent background only.
+- Flat station rows preserve country, genre, codec and bitrate. Current-station ink and hover backgrounds are separate, with space between rows.
 - The plugin no longer emits `aria-label`, `title`, `setTooltip` or `data-tooltip`, so Obsidian never shows an unrequested hover bubble; icons use hidden text labels and inputs use native labels.
 - Plugin themes are limited to the original player and iPod; previously removed themes migrate to the original player.
 
 ### Added
 
+- Ten interface language choices with system-language detection and English fallback; Arabic uses right-to-left layout. Untranslated secondary messages fall back to English.
+- Browse music, spoken audio and soundscapes with exact-tag, language and region filters. Draft selections are applied together; reset remains in the fixed footer.
+- A 15-minute directory cache with concurrent-request deduplication, stale-result protection and retained results on refresh failure.
+- Responsive player recomposition and a fixed-proportion iPod shell with isolated monochrome controls.
 - Regression tests for the immersive layout contract, the tooltip-free rendered view, station row content, and iPod screen navigation.
 
 ## 1.0.0 - 2026-09-13

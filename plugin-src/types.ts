@@ -29,6 +29,7 @@ export interface TasteProfile {
 }
 
 export interface RadioSettings {
+  language?: import("./i18n").LanguageSetting;
   defaultMood: MoodId;
   volume: number;
   theme: import("./themes").RadioThemeId;

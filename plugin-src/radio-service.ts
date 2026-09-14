@@ -1,5 +1,7 @@
 import { requestUrl } from "obsidian";
 import type { MoodId, Station } from "./types";
+import type { DirectoryFilter } from "./catalog";
+import { DirectoryCache } from "./directory-cache";
 
 const QIAOMU_API = "https://radio.qiaomu.ai";
 const RADIO_BROWSER_APIS = [
@@ -72,18 +74,42 @@ function cleanStation(raw: RadioBrowserStation): Station | null {
 }
 
 function deduplicate(stations: Station[]): Station[] {
-  return Array.from(new Map(stations.filter((station) => station.id && station.name && station.streamUrl).map((station) => [station.id, station])).values());
+  const ids = new Set<string>();
+  const streams = new Set<string>();
+  return stations.filter(station => {
+    if (!station.id || !station.name || !station.streamUrl || ids.has(station.id) || streams.has(station.streamUrl)) return false;
+    ids.add(station.id);
+    streams.add(station.streamUrl);
+    return true;
+  });
 }
 
 export class RadioService {
-  async stations(mood: MoodId, query = ""): Promise<{ stations: Station[]; notice: string }> {
+  private cache = new DirectoryCache<{ stations: Station[]; notice: string }>();
+
+  private key(mood: MoodId, query: string, filter: DirectoryFilter): string {
+    return JSON.stringify([query ? "search" : filter.tag || (mood === "recommend" ? "focus" : mood), query.trim().toLowerCase(), filter.country || "", filter.language || ""]);
+  }
+
+  cached(mood: MoodId, query = "", filter: DirectoryFilter = {}): { stations: Station[]; notice: string } | undefined {
+    return this.cache.peek(this.key(mood, query, filter));
+  }
+
+  stations(mood: MoodId, query = "", filter: DirectoryFilter = {}): Promise<{ stations: Station[]; notice: string }> {
+    return this.cache.get(this.key(mood, query, filter), () => this.fetchStations(mood, query.trim(), filter));
+  }
+
+  private async fetchStations(mood: MoodId, query: string, filter: DirectoryFilter): Promise<{ stations: Station[]; notice: string }> {
     const effectiveMood = mood === "recommend" ? "focus" : mood;
     try {
-      const stations = await this.fromRadioBrowser(effectiveMood, query);
+      const stations = await this.fromRadioBrowser(effectiveMood, query, filter);
       return { stations, notice: "" };
     } catch {
       // Continue with Qiaomu's reviewed fallback directory.
     }
+
+    // The fallback endpoint cannot express these filters. Never return unrelated stations.
+    if (filter.tag || filter.country || filter.language) throw new Error("暂时联系不上分类目录，请重试或切换分类。");
 
     const params = new URLSearchParams({ mood: effectiveMood, q: query });
     const response = await requestUrl({ url: `${QIAOMU_API}/api/stations?${params.toString()}` });
@@ -106,22 +132,26 @@ export class RadioService {
     return station.streamUrl;
   }
 
-  private async fromRadioBrowser(mood: Exclude<MoodId, "recommend">, query: string): Promise<Station[]> {
+  private async fromRadioBrowser(mood: Exclude<MoodId, "recommend">, query: string, filter: DirectoryFilter): Promise<Station[]> {
     let lastError: unknown;
     for (const base of RADIO_BROWSER_APIS) {
       try {
         const params = new URLSearchParams({
           hidebroken: "true",
           limit: "60",
-          order: query ? "clickcount" : "votes",
+          order: "clickcount",
+          tagExact: "true",
+          languageExact: "true",
           reverse: "true",
         });
         if (query) params.set("name", query.slice(0, 80));
-        else params.set("tag", MOOD_TAGS[mood][0] ?? "music");
+        else if (filter.tag || (!filter.country && !filter.language)) params.set("tag", filter.tag || MOOD_TAGS[mood][0] || "music");
+        if (filter.country) params.set("countrycode", filter.country);
+        if (filter.language) params.set("language", filter.language);
         const response = await requestUrl({ url: `${base}/stations/search?${params.toString()}` });
         const raw = Array.isArray(response.json) ? response.json as RadioBrowserStation[] : [];
         const stations = deduplicate(raw.map(cleanStation).filter((item): item is Station => item !== null));
-        if (stations.length > 0) return stations;
+        if (Array.isArray(response.json)) return stations;
       } catch (error) {
         lastError = error;
       }

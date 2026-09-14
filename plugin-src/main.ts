@@ -5,17 +5,25 @@ import { QiaomuRadioView, RADIO_VIEW_TYPE } from "./radio-view";
 import { EMPTY_PROFILE, rankStations, recordPlay, recordSkip, setLiked } from "./taste";
 import { normalizeTheme, RADIO_THEMES, type RadioThemeId } from "./themes";
 import type { MoodId, RadioData, Station } from "./types";
+import { resolveLocale, translate, UI_LANGUAGES, type LanguageSetting } from "./i18n";
 
 const DEFAULT_DATA: RadioData = {
   settings: {
     defaultMood: "recommend",
     volume: 0.72,
     theme: "classic",
+    language: "auto",
   },
   profile: EMPTY_PROFILE,
 };
 
 export default class QiaomuRadioPlugin extends Plugin {
+  t(source: string): string { return translate(source, resolveLocale(this.data.settings.language)); }
+  setLanguage(language: LanguageSetting): void {
+    this.data.settings.language = language;
+    void this.saveState();
+    this.refreshViews();
+  }
   data: RadioData = structuredClone(DEFAULT_DATA);
   readonly directory = new RadioService();
   player!: RadioPlayer;
@@ -27,9 +35,9 @@ export default class QiaomuRadioPlugin extends Plugin {
     await this.loadState();
     this.player = new RadioPlayer(this.data.settings.volume, () => this.scheduleFallback());
     this.registerView(RADIO_VIEW_TYPE, (leaf) => new QiaomuRadioView(leaf, this));
-    this.addRibbonIcon("radio-tower", "打开乔木电台", () => void this.activateView());
-    this.addCommand({ id: "open-radio", name: "打开电台", callback: () => void this.activateView() });
-    this.addCommand({ id: "toggle-playback", name: "播放或暂停", checkCallback: (checking) => {
+    this.addRibbonIcon("radio-tower", this.t("打开乔木电台"), () => void this.activateView());
+    this.addCommand({ id: "open-radio", name: this.t("打开电台"), callback: () => void this.activateView() });
+    this.addCommand({ id: "toggle-playback", name: this.t("播放或暂停"), checkCallback: (checking) => {
       if (!this.player.snapshot().station) return false;
       if (!checking) this.player.toggle();
       return true;
@@ -67,7 +75,7 @@ export default class QiaomuRadioPlugin extends Plugin {
       const url = await this.directory.streamUrl(station);
       await this.player.play(station, url);
     } catch {
-      new Notice("这家电台暂时无法连接，正在尝试下一家。");
+      new Notice(this.t("这家电台暂时无法连接，正在尝试下一家。"));
       this.scheduleFallback();
     }
   }
@@ -146,19 +154,25 @@ class RadioSettingTab extends PluginSettingTab {
 
   display(): void {
     this.containerEl.empty();
-    new Setting(this.containerEl).setName("乔木电台").setHeading();
+    const t = (source: string): string => this.plugin.t(source);
+    this.containerEl.dir = resolveLocale(this.plugin.data.settings.language) === "ar" ? "rtl" : "ltr";
+    new Setting(this.containerEl).setName(t("界面语言"))
+      .addDropdown(dropdown => dropdown.addOptions({ ...UI_LANGUAGES, auto: t("跟随系统") })
+        .setValue(this.plugin.data.settings.language ?? "auto")
+        .onChange(value => { this.plugin.setLanguage(value as LanguageSetting); this.display(); }));
+    new Setting(this.containerEl).setName(t("乔木电台")).setHeading();
     new Setting(this.containerEl)
-      .setName("默认频道")
-      .setDesc("每次新开电台页时首先显示的频道。")
+      .setName(t("默认频道"))
+      .setDesc(t("每次新开电台页时首先显示的频道。"))
       .addDropdown((dropdown) => dropdown
         .addOptions({
-          recommend: "为你推荐",
-          focus: "专注",
-          unwind: "松弛",
-          jazz: "爵士",
-          classical: "古典",
-          energy: "能量",
-          world: "世界",
+          recommend: t("推荐"),
+          focus: t("专注"),
+          unwind: t("松弛"),
+          jazz: t("爵士"),
+          classical: t("古典"),
+          energy: t("能量"),
+          world: t("世界"),
         })
         .setValue(this.plugin.data.settings.defaultMood)
         .onChange(async (value) => {
@@ -166,26 +180,26 @@ class RadioSettingTab extends PluginSettingTab {
           await this.plugin.saveData(this.plugin.data);
         }));
     new Setting(this.containerEl)
-      .setName("默认播放器")
-      .setDesc("播放器主题会保存在当前 Vault。")
+      .setName(t("默认播放器"))
+      .setDesc(t("播放器主题会保存在当前 Vault。"))
       .addDropdown((dropdown) => dropdown
-        .addOptions(Object.fromEntries(RADIO_THEMES.map((theme) => [theme.id, theme.label])))
+        .addOptions(Object.fromEntries(RADIO_THEMES.map((theme) => [theme.id, t(theme.label)])))
         .setValue(this.plugin.data.settings.theme)
         .onChange((value) => this.plugin.setTheme(value as RadioThemeId)));
     new Setting(this.containerEl)
-      .setName("默认音量")
-      .setDesc("音量调整会立即保存。")
+      .setName(t("默认音量"))
+      .setDesc(t("音量调整会立即保存。"))
       .addSlider((slider) => slider
         .setLimits(0, 100, 1)
         .setValue(Math.round(this.plugin.data.settings.volume * 100))
         .onChange((value) => this.plugin.setVolume(value / 100)));
 
-    new Setting(this.containerEl).setName("关于").setHeading();
+    new Setting(this.containerEl).setName(t("关于")).setHeading();
     const about = this.containerEl.createDiv({ cls: "qiaomu-radio-settings__about" });
-    about.createEl("p", { text: `版本 ${this.plugin.manifest.version} · 电台目录来自 Radio Browser，播放偏好只保存在当前 Vault 的插件数据中。` });
+    about.createEl("p", { text: `${t("版本")} ${this.plugin.manifest.version} · ${t("电台目录来自 Radio Browser，播放偏好只保存在当前 Vault 的插件数据中。")}` });
     const links = about.createDiv({ cls: "qiaomu-radio-settings__links" });
     links.createEl("a", { text: "GitHub issues", href: "https://github.com/joeseesun/qiaomu-radio/issues" });
-    links.createEl("a", { text: "在线电台", href: "https://radio.qiaomu.ai/" });
+    links.createEl("a", { text: t("在线电台"), href: "https://radio.qiaomu.ai/" });
     links.createEl("a", { text: "向阳乔木", href: "https://x.com/vista8" });
   }
 }
