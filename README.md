@@ -23,7 +23,7 @@
 | 全球电台目录 | 通过 Radio Browser 发现真实直播电台，目录失败时使用乔木审核过的备用台单 |
 | 场景频道 | 专注、松弛、爵士、古典、能量与世界音乐快速切换 |
 | 本地推荐 | 根据喜欢、跳过和最近收听对“为你推荐”重新排序 |
-| 连续收听 | 播放失败时解释原因并自动尝试下一家电台 |
+| 播放恢复 | 失败后重连当前电台一次，仍失败则停止，不擅自连续切台 |
 | 搜索与收藏 | 按电台名称搜索，把喜欢的电台留在当前 Vault |
 | 原生体验 | Obsidian 命令、功能区入口、设置页、深浅主题与键盘焦点完整适配 |
 
@@ -128,7 +128,7 @@ versions.json        Obsidian 版本兼容映射
 
 # English
 
-Qiaomu Radio is a native Obsidian plugin for discovering and playing live radio while you read, write, and think. It provides one focused player view with station search, mood channels, local recommendations, favorites, history, playback controls, and graceful station fallback.
+Qiaomu Radio is a native Obsidian plugin for discovering and playing live radio while you read, write, and think. It provides one focused player view with station search, mood channels, local recommendations, favorites, history, playback controls, and bounded same-station recovery. A failed stream retries once, then stops instead of automatically cycling through other stations.
 
 ## Install
 

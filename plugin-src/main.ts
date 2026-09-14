@@ -29,11 +29,12 @@ export default class QiaomuRadioPlugin extends Plugin {
   player!: RadioPlayer;
   private queue: Station[] = [];
   private queueIndex = -1;
-  private failureTimer: number | null = null;
+  private playGeneration = 0;
+  private pendingStationId: string | null = null;
 
   async onload(): Promise<void> {
     await this.loadState();
-    this.player = new RadioPlayer(this.data.settings.volume, () => this.scheduleFallback());
+    this.player = new RadioPlayer(this.data.settings.volume);
     this.registerView(RADIO_VIEW_TYPE, (leaf) => new QiaomuRadioView(leaf, this));
     this.addRibbonIcon("radio-tower", this.t("打开乔木电台"), () => void this.activateView());
     this.addCommand({ id: "open-radio", name: this.t("打开电台"), callback: () => void this.activateView() });
@@ -46,7 +47,7 @@ export default class QiaomuRadioPlugin extends Plugin {
   }
 
   onunload(): void {
-    if (this.failureTimer !== null) window.clearTimeout(this.failureTimer);
+    this.playGeneration++;
     this.player.destroy();
   }
 
@@ -66,17 +67,27 @@ export default class QiaomuRadioPlugin extends Plugin {
   }
 
   async playStation(station: Station, queue: Station[]): Promise<void> {
+    const current = this.player.snapshot();
+    if (this.pendingStationId === station.id || (current.station?.id === station.id &&
+      (current.status === "loading" || current.status === "playing"))) return;
+    const generation = ++this.playGeneration;
+    this.pendingStationId = station.id;
+    this.player.stop();
     this.queue = queue;
     this.queueIndex = Math.max(0, queue.findIndex((item) => item.id === station.id));
-    this.data.profile = recordPlay(this.data.profile, station);
-    await this.saveState();
-    this.refreshViews();
     try {
+      this.data.profile = recordPlay(this.data.profile, station);
+      await this.saveState();
+      if (generation !== this.playGeneration) return;
+      this.refreshViews();
       const url = await this.directory.streamUrl(station);
+      if (generation !== this.playGeneration) return;
+      this.pendingStationId = null;
       await this.player.play(station, url);
     } catch {
-      new Notice(this.t("这家电台暂时无法连接，正在尝试下一家。"));
-      this.scheduleFallback();
+      if (generation === this.playGeneration) new Notice(this.t("这家电台暂时无法播放。"));
+    } finally {
+      if (generation === this.playGeneration) this.pendingStationId = null;
     }
   }
 
@@ -116,14 +127,6 @@ export default class QiaomuRadioPlugin extends Plugin {
     this.data.settings.theme = normalizeTheme(theme);
     void this.saveState();
     this.refreshViews();
-  }
-
-  private scheduleFallback(): void {
-    if (this.failureTimer !== null) return;
-    this.failureTimer = window.setTimeout(() => {
-      this.failureTimer = null;
-      void this.next(false);
-    }, 1200);
   }
 
   private refreshViews(): void {
