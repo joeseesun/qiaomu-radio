@@ -7,6 +7,7 @@ import { SupportPanel } from "./SupportPanel";
 import { ModelLoader } from "./ModelLoader";
 import { LOCALES, LOCALE_LABELS, regionName, useI18n, type MessageKey } from "./i18n";
 import { RADIO_REGIONS } from "./regions";
+import { FantasyModelPreload } from "./modelAssets";
 
 type Page = "now" | "menu" | "channels" | "regions" | "stations" | "favorites" | "history" | "search" | "info" | "support" | "language";
 export type PlayerProps = {
@@ -170,7 +171,7 @@ export function PlayerSkin(props: PlayerProps) {
 
   if (deck || consoleSkin) return <ClassicPlayer player={props} screen={screen} page={page} open={open} track={track} />;
   if (theme === "rams") return <Suspense fallback={<ModelLoader />}><NativeRadio player={props} track={track} /></Suspense>;
-  if (theme === "fantasy") return <Suspense fallback={<ModelLoader fantasy />}><FantasyRadio player={props} screen={screen} page={page} open={open} track={track} /></Suspense>;
+  if (theme === "fantasy") return <><FantasyModelPreload /><Suspense fallback={<ModelLoader fantasy />}><FantasyRadio player={props} screen={screen} page={page} open={open} track={track} /></Suspense></>;
 
   return (
     <section className={`radio-device device-${theme}`} aria-label={label}>
