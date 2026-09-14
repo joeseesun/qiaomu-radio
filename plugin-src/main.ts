@@ -3,12 +3,14 @@ import { RadioPlayer } from "./player";
 import { RadioService } from "./radio-service";
 import { QiaomuRadioView, RADIO_VIEW_TYPE } from "./radio-view";
 import { EMPTY_PROFILE, rankStations, recordPlay, recordSkip, setLiked } from "./taste";
+import { normalizeTheme, RADIO_THEMES, type RadioThemeId } from "./themes";
 import type { MoodId, RadioData, Station } from "./types";
 
 const DEFAULT_DATA: RadioData = {
   settings: {
     defaultMood: "recommend",
     volume: 0.72,
+    theme: "classic",
   },
   profile: EMPTY_PROFILE,
 };
@@ -102,6 +104,12 @@ export default class QiaomuRadioPlugin extends Plugin {
     void this.saveState();
   }
 
+  setTheme(theme: RadioThemeId): void {
+    this.data.settings.theme = normalizeTheme(theme);
+    void this.saveState();
+    this.refreshViews();
+  }
+
   private scheduleFallback(): void {
     if (this.failureTimer !== null) return;
     this.failureTimer = window.setTimeout(() => {
@@ -123,6 +131,7 @@ export default class QiaomuRadioPlugin extends Plugin {
       settings: { ...DEFAULT_DATA.settings, ...(saved?.settings ?? {}) },
       profile: { ...EMPTY_PROFILE, ...(saved?.profile ?? {}) },
     };
+    this.data.settings.theme = normalizeTheme(this.data.settings.theme);
   }
 
   private async saveState(): Promise<void> {
@@ -156,6 +165,13 @@ class RadioSettingTab extends PluginSettingTab {
           this.plugin.data.settings.defaultMood = value as MoodId;
           await this.plugin.saveData(this.plugin.data);
         }));
+    new Setting(this.containerEl)
+      .setName("默认播放器")
+      .setDesc("播放器主题会保存在当前 Vault。")
+      .addDropdown((dropdown) => dropdown
+        .addOptions(Object.fromEntries(RADIO_THEMES.map((theme) => [theme.id, theme.label])))
+        .setValue(this.plugin.data.settings.theme)
+        .onChange((value) => this.plugin.setTheme(value as RadioThemeId)));
     new Setting(this.containerEl)
       .setName("默认音量")
       .setDesc("音量调整会立即保存。")

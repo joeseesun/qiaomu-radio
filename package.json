@@ -1,6 +1,6 @@
 {
   "name": "qiaomu-radio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "一台可真实操作的 3D 网络电台：在完整播放器主题中发现全球直播电台。",
   "private": true,
   "license": "GPL-3.0-or-later",
