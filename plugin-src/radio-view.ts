@@ -274,7 +274,7 @@ export class QiaomuRadioView extends ItemView {
       const current = this.playerState.station?.id === station.id;
       const button = results.createEl("button", { cls: `qiaomu-radio__ipod-station${current ? " is-current" : ""}` });
       const copy = button.createSpan();
-      copy.createEl("strong", { text: station.name });
+      copy.createEl("strong", { text: stationRowContent(station, 0, false).name });
       copy.createSpan({ text: `${station.country || "全球"} · ${station.tags[0] || station.codec || "LIVE"}` });
       const icon = button.createSpan({ attr: { "aria-hidden": "true" } });
       setIcon(icon, current && this.playerState.status === "playing" ? "audio-lines" : "chevron-right");

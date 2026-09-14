@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { stationRowContent } from "./station-row";
+import { cleanStationName, stationRowContent } from "./station-row";
 import type { Station } from "./types";
 
 const station = (overrides: Partial<Station> = {}): Station => ({
@@ -22,6 +22,30 @@ const station = (overrides: Partial<Station> = {}): Station => ({
 });
 
 describe("station list row content", () => {
+  it("strips provider decoration from raw directory names", () => {
+    expect(cleanStationName("___LOUNGE__ by rautemusik (rm.fm)")).toBe("LOUNGE by rautemusik (rm.fm)");
+    expect(cleanStationName("Chill Lounge Florida (USA) 128k mp3")).toBe("Chill Lounge Florida (USA)");
+    expect(cleanStationName("Slow Focus | NTS")).toBe("Slow Focus | NTS");
+    expect(cleanStationName("Jazz24 [128k MP3]")).toBe("Jazz24");
+  });
+
+  it("keeps meaningful brackets even when other brackets were quality tags", () => {
+    expect(cleanStationName("Radio Swiss Jazz (128k)")).toBe("Radio Swiss Jazz");
+    expect(cleanStationName("Radio Paradise (USA)")).toBe("Radio Paradise (USA)");
+    expect(cleanStationName("SomaFM Groove Salad (128k MP3)")).toBe("SomaFM Groove Salad");
+  });
+
+  it("shortens very long names instead of letting them run", () => {
+    const long = "A".repeat(30) + " " + "B".repeat(60);
+    const cleaned = cleanStationName(long);
+    expect(cleaned.length).toBeLessThanOrEqual(65);
+    expect(cleaned.endsWith("…")).toBe(true);
+  });
+
+  it("falls back to the raw name when cleaning empties it", () => {
+    expect(stationRowContent(station({ name: "___" }), 0, false).name).toBe("___");
+  });
+
   it("numbers rows from one for list position", () => {
     expect(stationRowContent(station(), 0, false).index).toBe(1);
     expect(stationRowContent(station(), 41, false).index).toBe(42);
