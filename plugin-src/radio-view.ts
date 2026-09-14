@@ -33,6 +33,10 @@ export class QiaomuRadioView extends ItemView {
   private notice = "";
   private playerState: PlayerState;
   private pocketPage: PocketPage = "menu";
+  private pocketSelection: Partial<Record<PocketPage, number>> = {};
+  private pocketParents: PocketPage[] = [];
+  private pocketItems: HTMLButtonElement[] = [];
+  private pocketVolumeUpdate: (() => void) | null = null;
   private unsubscribe: (() => void) | null = null;
   private requestGeneration = 0;
   private browseFilter: DirectoryFilter = {};
@@ -52,13 +56,19 @@ export class QiaomuRadioView extends ItemView {
 
   async onOpen(): Promise<void> {
     this.unsubscribe = this.plugin.player.subscribe((state) => {
+      const volumeOnly = state.station === this.playerState.station && state.status === this.playerState.status && state.message === this.playerState.message;
       this.playerState = state;
+      if (volumeOnly && this.plugin.data.settings.theme === "pocket") {
+        this.pocketVolumeUpdate?.();
+        return;
+      }
       this.render();
     });
     await this.loadStations();
   }
 
   async onClose(): Promise<void> {
+    if (this.plugin.data.settings.theme === "pocket") this.plugin.setVolume(this.playerState.volume);
     this.closed = true;
     this.requestGeneration++;
     this.unsubscribe?.();
@@ -150,6 +160,8 @@ export class QiaomuRadioView extends ItemView {
   }
 
   private renderPocket(shell: HTMLElement): void {
+    this.pocketItems = [];
+    this.pocketVolumeUpdate = null;
     const state = this.playerState;
     const ipod = shell.createEl("section", { cls: "qiaomu-radio__ipod" });
     const top = ipod.createDiv({ cls: "qiaomu-radio__ipod-top" });
@@ -164,8 +176,7 @@ export class QiaomuRadioView extends ItemView {
     this.addScreenReaderText(back, this.t("返回菜单"));
     back.disabled = this.pocketPage === "menu";
     back.addEventListener("click", () => {
-      this.pocketPage = "menu";
-      this.render();
+      this.pocketBack();
     });
     screenBar.createEl("strong", { text: this.pocketTitle() });
     const playback = screenBar.createEl("button");
@@ -178,6 +189,17 @@ export class QiaomuRadioView extends ItemView {
     this.renderPocketContent(screenBody);
     this.renderPocketVolume(screen);
     this.renderPocketWheel(ipod);
+    this.highlightPocketItem();
+    ipod.addEventListener("keydown", (event) => {
+      if ((event.target as HTMLElement).matches("input") || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        this.turnPocketWheel(event.key === "ArrowDown" ? 1 : -1);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        this.pocketBack();
+      }
+    });
     ipod.createDiv({ cls: "qiaomu-radio__ipod-signature", text: "THE WORLD IS ON AIR" });
   }
 
@@ -201,8 +223,9 @@ export class QiaomuRadioView extends ItemView {
         { page: "favorites", label: this.t("喜欢") },
         { page: "history", label: this.t("最近") },
       ];
-      items.forEach((item, index) => {
-        const button = content.createEl("button", { cls: `qiaomu-radio__ipod-menu-row${index === 0 ? " is-primary" : ""}` });
+      items.forEach((item) => {
+        const button = content.createEl("button", { cls: "qiaomu-radio__ipod-menu-row" });
+        this.pocketItems.push(button);
         button.createSpan({ text: item.label });
         const arrow = button.createSpan({ attr: { "aria-hidden": "true" } });
         setIcon(arrow, "chevron-right");
@@ -214,7 +237,7 @@ export class QiaomuRadioView extends ItemView {
     if (this.pocketPage === "now") {
       const station = this.playerState.station;
       const now = content.createDiv({ cls: "qiaomu-radio__ipod-now" });
-      now.createSpan({ text: this.playerState.status === "playing" ? "ON AIR" : "READY" });
+      now.createSpan({ text: this.t(this.playerState.message) });
       now.createEl("h2", { text: station?.name ?? this.t("还没有播放电台") });
       now.createEl("p", { text: station ? stationRowContent(station, 0, false, resolveLocale(this.plugin.data.settings.language)).meta : this.t("从电台列表选择一家开始。") });
       if (station) {
@@ -232,6 +255,7 @@ export class QiaomuRadioView extends ItemView {
       const list = content.createDiv({ cls: "qiaomu-radio__ipod-options" });
       CHANNELS.forEach((channel) => {
         const button = list.createEl("button", { attr: { "aria-pressed": String(channel.id === this.channel) } });
+        this.pocketItems.push(button);
         button.createSpan({ text: this.t(channel.label) });
         const icon = button.createSpan({ attr: { "aria-hidden": "true" } });
         setIcon(icon, channel.id === this.channel ? "check" : "chevron-right");
@@ -240,6 +264,7 @@ export class QiaomuRadioView extends ItemView {
           this.browseFilter = {};
           this.directoryQuery = "";
           this.filterQuery = "";
+          this.pocketParents.push(this.pocketPage);
           this.pocketPage = channel.id === "favorites" || channel.id === "history" ? channel.id : "stations";
           void this.loadStations();
         });
@@ -258,6 +283,7 @@ export class QiaomuRadioView extends ItemView {
         this.directoryQuery = input.value.trim().slice(0, 80);
         this.filterQuery = "";
         this.channel = "recommend";
+        this.pocketParents.push(this.pocketPage);
         this.pocketPage = "stations";
         this.browseFilter = {};
         void this.loadStations();
@@ -271,6 +297,7 @@ export class QiaomuRadioView extends ItemView {
   }
 
   private openPocketPage(page: PocketPage): void {
+    this.pocketParents.push(this.pocketPage);
     this.pocketPage = page;
     if (page === "favorites" || page === "history") {
       this.channel = page;
@@ -301,12 +328,14 @@ export class QiaomuRadioView extends ItemView {
     stations.forEach((station) => {
       const current = this.playerState.station?.id === station.id;
       const button = results.createEl("button", { cls: `qiaomu-radio__ipod-station${current ? " is-current" : ""}` });
+      this.pocketItems.push(button);
       const copy = button.createSpan();
       copy.createEl("strong", { text: stationRowContent(station, 0, false).name });
       copy.createSpan({ text: stationRowContent(station, 0, false, resolveLocale(this.plugin.data.settings.language)).meta });
       const icon = button.createSpan({ attr: { "aria-hidden": "true" } });
       setIcon(icon, current && this.playerState.status === "playing" ? "audio-lines" : "chevron-right");
       button.addEventListener("click", () => {
+        this.pocketParents.push(this.pocketPage);
         this.pocketPage = "now";
         void this.plugin.playStation(station, stations);
       });
@@ -320,16 +349,63 @@ export class QiaomuRadioView extends ItemView {
     const volumeId = "qiaomu-radio-pocket-volume";
     volume.createEl("label", { cls: "qiaomu-radio__sr-only", text: this.t("音量"), attr: { for: volumeId } });
     const slider = volume.createEl("input", { type: "range", value: String(Math.round(this.playerState.volume * 100)), attr: { id: volumeId, min: "0", max: "100", step: "1" } });
-    slider.addEventListener("change", () => this.plugin.setVolume(Number(slider.value) / 100));
-    volume.createSpan({ text: `${Math.round(this.playerState.volume * 100)}%` });
+    const value = volume.createSpan({ text: `${Math.round(this.playerState.volume * 100)}%` });
+    this.pocketVolumeUpdate = () => {
+      const percent = Math.round(this.playerState.volume * 100);
+      slider.value = String(percent);
+      slider.style.setProperty("--ipod-volume", `${percent}%`);
+      value.setText(`${percent}%`);
+      setIcon(icon, percent === 0 ? "volume-x" : "volume-2");
+    };
+    this.pocketVolumeUpdate();
+    slider.addEventListener("input", () => this.plugin.setVolume(Number(slider.value) / 100, false));
+    const commit = () => this.plugin.setVolume(Number(slider.value) / 100);
+    slider.addEventListener("change", commit);
+    slider.addEventListener("blur", commit);
+    slider.addEventListener("pointercancel", commit);
+  }
+
+  private pocketBack(): void {
+    this.pocketPage = this.pocketParents.pop() ?? "menu";
+    this.render();
+  }
+
+  private highlightPocketItem(): void {
+    const index = Math.min(this.pocketSelection[this.pocketPage] ?? 0, Math.max(0, this.pocketItems.length - 1));
+    this.pocketSelection[this.pocketPage] = index;
+    this.pocketItems.forEach((item, position) => {
+      item.toggleClass("is-highlighted", position === index);
+      item.addEventListener("focus", () => {
+        this.pocketSelection[this.pocketPage] = position;
+        this.pocketItems.forEach((row, at) => row.toggleClass("is-highlighted", at === position));
+      });
+    });
+  }
+
+  private turnPocketWheel(direction: number): void {
+    if (this.pocketPage === "now") {
+      this.plugin.setVolume(Math.max(0, Math.min(1, this.playerState.volume + direction * 0.02)));
+      return;
+    }
+    const index = Math.max(0, Math.min(this.pocketItems.length - 1, (this.pocketSelection[this.pocketPage] ?? 0) + direction));
+    this.pocketSelection[this.pocketPage] = index;
+    this.pocketItems.forEach((item, position) => item.toggleClass("is-highlighted", position === index));
+    this.pocketItems[index]?.scrollIntoView?.({ block: "nearest" });
   }
 
   private renderPocketWheel(ipod: HTMLElement): void {
     const wheel = ipod.createDiv({ cls: "qiaomu-radio__wheel" });
+    let scroll = 0;
+    wheel.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      scroll += event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 200 : 1);
+      if (Math.abs(scroll) < 24) return;
+      this.turnPocketWheel(Math.sign(scroll));
+      scroll = 0;
+    }, { passive: false });
     const menu = wheel.createEl("button", { cls: "qiaomu-radio__wheel-menu", text: "MENU" });
     menu.addEventListener("click", () => {
-      this.pocketPage = "menu";
-      this.render();
+      this.pocketBack();
     });
     const previous = wheel.createEl("button", { cls: "qiaomu-radio__wheel-previous" });
     setIcon(previous, "skip-back");
@@ -342,13 +418,20 @@ export class QiaomuRadioView extends ItemView {
     next.disabled = !this.playerState.station && this.stations.length === 0;
     next.addEventListener("click", () => void this.plugin.next(true));
     const toggle = wheel.createEl("button", { cls: "qiaomu-radio__wheel-toggle" });
-    setIcon(toggle, this.playerState.status === "playing" ? "pause" : "play");
+    const playMark = toggle.createSpan({ attr: { "aria-hidden": "true" } });
+    const pauseMark = toggle.createSpan({ attr: { "aria-hidden": "true" } });
+    setIcon(playMark, "play");
+    setIcon(pauseMark, "pause");
     this.addScreenReaderText(toggle, this.playerState.status === "playing" ? this.t("暂停") : this.t("播放"));
     toggle.disabled = !this.playerState.station;
     toggle.addEventListener("click", () => this.plugin.player.toggle());
     const center = wheel.createEl("button", { cls: "qiaomu-radio__wheel-center" });
-    this.addScreenReaderText(center, this.t("播放或暂停"));
-    center.addEventListener("click", () => this.plugin.player.toggle());
+    this.addScreenReaderText(center, this.pocketPage === "now" ? this.t("播放或暂停") : this.pocketPage === "search" ? this.t("搜索") : this.pocketItems[this.pocketSelection[this.pocketPage] ?? 0]?.textContent ?? this.t("正在播放"));
+    center.addEventListener("click", () => {
+      if (this.pocketPage === "now") this.plugin.player.toggle();
+      else if (this.pocketPage === "search") ipod.querySelector<HTMLInputElement>('input[type="search"]')?.focus();
+      else this.pocketItems[this.pocketSelection[this.pocketPage] ?? 0]?.click();
+    });
   }
 
   private renderModeSwitch(device: HTMLElement): void {

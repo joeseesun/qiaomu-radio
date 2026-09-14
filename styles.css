@@ -1054,31 +1054,50 @@
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__shell { padding: 18px; }
 .qiaomu-radio__ipod { width: min(400px, 100%); height: 640px; min-height: 640px; padding: 26px 30px 20px; border-radius: 48px; }
 .qiaomu-radio__ipod-screen { height: 268px; min-height: 268px; margin-top: 16px; border-width: 7px; border-radius: 12px; }
-.qiaomu-radio__ipod-menu-row { min-height: 42px; }
+.qiaomu-radio__ipod-menu-row { min-height: 30px; padding: 4px 12px; font-size: 14px; line-height: 1.5; }
+.qiaomu-radio__ipod-screen-bar { min-height: 34px; }
+.qiaomu-radio__ipod-screen-bar strong { font-size: 15px; }
+.qiaomu-radio__ipod-top > span { color: #969b90; font-size: 17px; font-weight: 600; }
+.qiaomu-radio__ipod-volume { min-height: 44px; padding: 0 12px; font-variant-numeric: tabular-nums; }
 .qiaomu-radio__wheel { width: 216px; height: 216px; margin-top: 26px; }
 .qiaomu-radio__wheel-menu { top: 15px; left: 62px; right: 62px; }
 .qiaomu-radio__wheel-previous { top: 87px; left: 14px; }
 .qiaomu-radio__wheel-next { top: 87px; right: 14px; }
 .qiaomu-radio__wheel-toggle { left: 82px; right: 82px; bottom: 10px; }
+.qiaomu-radio__wheel button.qiaomu-radio__wheel-toggle { display: flex; align-items: center; justify-content: center; gap: 0; }
+.qiaomu-radio__wheel-toggle > span:not(.qiaomu-radio__sr-only) { display: flex; }
+.qiaomu-radio__wheel-toggle > span > svg { width: 16px; height: 18px; }
 .qiaomu-radio__wheel .qiaomu-radio__wheel-center { width: 82px; height: 82px; top: 66px; left: 66px; }
 .qiaomu-radio[data-theme="pocket"] button:not(.clickable-icon) { background: transparent; border: 0; border-radius: 0; box-shadow: none; color: #45543b; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:not(.clickable-icon) { color: #8d9683; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button.qiaomu-radio__wheel-center { border: 1px solid #c5cdba; border-radius: 50%; corner-shape: round; background: #f6f7f1; }
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-menu-row.is-primary,
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-menu-row.is-primary:hover,
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-options button[aria-pressed="true"],
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-station.is-current {
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button.is-highlighted,
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button.is-highlighted:hover {
   background: #45543b; color: #e1eaca;
 }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:hover { background: transparent; color: #67735c; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel .qiaomu-radio__wheel-center:hover { background: #f0f2e9; }
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button:hover:not(.is-primary):not(.is-current):not([aria-pressed="true"]) { background: rgb(69 84 59 / 10%); color: #36432f; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button:hover:not(.is-highlighted) { background: rgb(69 84 59 / 10%); color: #36432f; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button:focus-visible { outline: 2px solid #45543b; outline-offset: -3px; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:focus-visible { outline: 2px solid #68765b; outline-offset: 2px; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:active:not(:disabled) { color: #45543b; transform: scale(.96); }
 .qiaomu-radio__ipod-now h2 { color: #36432f; font-size: 22px; line-height: 1.2; }
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-volume input[type="range"] { appearance: none; height: 24px; padding: 0; background: transparent; box-shadow: none; }
-.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-runnable-track { height: 5px; border: 1px solid #889674; border-radius: 4px; background: #b6c49b; box-shadow: none; }
-.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 0; border-radius: 50%; background: #45543b; box-shadow: none; }
-.qiaomu-radio__ipod-volume input[type="range"]::-moz-range-track { height: 5px; background: #b6c49b; }
-.qiaomu-radio__ipod-volume input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; background: #45543b; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-volume input[type="range"] { appearance: none; height: 40px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: ew-resize; direction: ltr; }
+.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-runnable-track { height: 10px; border: 1px solid #7d8c68; border-radius: 2px; background: linear-gradient(to right, #45543b var(--ipod-volume), transparent var(--ipod-volume)); box-shadow: inset 0 1px 2px rgb(55 68 45 / 12%); }
+.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-thumb { appearance: none; position: relative; top: 0; width: 6px; height: 14px; margin-top: -3px; border: 1px solid #cbd7ad; border-radius: 1px; background: #45543b; box-shadow: none; transition: none; cursor: ew-resize; }
+.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-thumb:hover,
+.qiaomu-radio__ipod-volume input[type="range"]::-webkit-slider-thumb:active { background: #36432f; border-color: #cbd7ad; box-shadow: none; }
+.qiaomu-radio__ipod-volume input[type="range"]::-moz-range-track { height: 8px; border: 1px solid #7d8c68; background: transparent; }
+.qiaomu-radio__ipod-volume input[type="range"]::-moz-range-progress { height: 8px; background: #45543b; }
+.qiaomu-radio__ipod-volume input[type="range"]::-moz-range-thumb { width: 6px; height: 14px; border: 1px solid #cbd7ad; border-radius: 1px; background: #45543b; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-volume input:focus-visible { outline: 2px solid #45543b; outline-offset: 0; }
+@container (max-width: 360px) {
+  .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__shell { padding: 8px; }
+  .qiaomu-radio__ipod { padding-inline: 16px; border-radius: 36px; }
+}
+@media (pointer: coarse) {
+  .qiaomu-radio__ipod-menu-row { min-height: 44px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .qiaomu-radio__transport > button { transition-duration: 0ms; }
