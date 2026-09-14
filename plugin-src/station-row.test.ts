@@ -75,13 +75,28 @@ describe("immersive player and list contract", () => {
 
   it("keeps the list free of zebra striping so only the current row is highlighted", () => {
     expect(css).not.toMatch(/nth-child\((?:odd|even)\)/);
-    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background: var\(--qr-accent-soft\)/);
+    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background-color: var\(--qr-accent-soft\)/);
     expect(css).toMatch(/\.qiaomu-radio__station\.is-current \.qiaomu-radio__station-index\s*{[^}]*color: var\(--qr-accent\)/);
   });
 
   it("gives the favourite control a visible resting state", () => {
     expect(css).toMatch(/\.qiaomu-radio__station-like\s*{[^}]*color: var\(--text-faint\)/);
     expect(css).toMatch(/\.qiaomu-radio__station-like:hover/);
+  });
+
+  it("paints the row background explicitly so host zebra rules cannot leak in", () => {
+    const row = css.match(/\.qiaomu-radio__station\s*{([^}]*)}/)?.[1] ?? "";
+    expect(row).toMatch(/background:\s*transparent/);
+  });
+
+  it("keeps the theme switch clear of the search field", () => {
+    const modes = css.match(/\.qiaomu-radio__modes\s*{([^}]*)}/)?.[1] ?? "";
+    const directory = css.match(/\.qiaomu-radio__directory\s*{([^}]*)}/)?.[1] ?? "";
+    const top = Number(modes.match(/top:\s*(\d+)px/)?.[1] ?? "0");
+    const padding = Number(directory.match(/padding:\s*(\d+)px/)?.[1] ?? "0");
+    expect(modes).toMatch(/position: absolute/);
+    expect(top + 24).toBeLessThanOrEqual(padding);
+    expect(css).toMatch(/\.qiaomu-radio__search button\s*{[^}]*white-space: nowrap/);
   });
 
   it("never generates hover tips from the player view", () => {

@@ -71,7 +71,6 @@
 
 .qiaomu-radio__modes,
 .qiaomu-radio__status,
-.qiaomu-radio__message,
 .qiaomu-radio__volume,
 .qiaomu-radio__channels {
   display: flex;
@@ -132,15 +131,23 @@
 
 .qiaomu-radio__status {
   gap: 8px;
+  min-height: 32px;
+  flex: 0 0 auto;
   color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .14em;
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.qiaomu-radio__status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qiaomu-radio__status-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
   border-radius: 50%;
   background: var(--text-faint);
 }
@@ -202,7 +209,8 @@
   height: 32px;
   align-items: end;
   gap: 4px;
-  margin-top: 20px;
+  margin-top: auto;
+  padding-top: 24px;
 }
 
 .qiaomu-radio__spectrum span {
@@ -219,23 +227,7 @@
   animation-delay: calc(var(--qr-bar) * -70ms);
 }
 
-.qiaomu-radio__message {
-  min-height: 34px;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--qr-line);
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.qiaomu-radio__message > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qiaomu-radio__message button,
+.qiaomu-radio__status-like,
 .qiaomu-radio__station-like {
   display: grid;
   width: 32px;
@@ -250,7 +242,12 @@
   color: var(--text-faint);
 }
 
+.qiaomu-radio__status-like {
+  margin-inline-start: auto;
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .qiaomu-radio__status-like:hover,
   .qiaomu-radio__station-like:hover {
     background: color-mix(in srgb, var(--text-normal) 7%, transparent);
     color: var(--text-normal);
@@ -307,7 +304,7 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
-  padding: 20px 24px 16px;
+  padding: 50px 24px 16px;
   border-inline-start: 1px solid var(--qr-line);
   background: var(--background-primary);
 }
@@ -318,7 +315,7 @@
   grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 0 4px 0 12px;
+  padding: 0 0 0 12px;
   border: 0;
   border-bottom: 1px solid var(--qr-line);
   border-radius: 0;
@@ -341,16 +338,19 @@
 
 .qiaomu-radio__search button {
   min-height: 28px;
-  padding: 3px 10px;
+  padding: 3px 4px 3px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   box-shadow: none;
   color: var(--text-muted);
   font-size: 12px;
+  white-space: nowrap;
 }
 
-.qiaomu-radio__search button:hover { color: var(--qr-accent); background: var(--qr-accent-soft); }
+.qiaomu-radio__search button:hover { color: var(--qr-accent); }
+
+.qiaomu-radio__search:has(input:placeholder-shown) button { display: none; }
 
 .qiaomu-radio__empty button {
   min-height: 32px;
@@ -440,16 +440,20 @@
   gap: 8px;
   margin: 0 -8px;
   padding: 0 8px;
+  background: transparent;
   border-radius: 8px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .qiaomu-radio__station:hover { background: color-mix(in srgb, var(--text-normal) 5%, transparent); }
+  .qiaomu-radio__station.is-current:hover { background: var(--qr-accent-soft); }
 }
 
 .qiaomu-radio__station.is-current {
-  background: var(--qr-accent-soft);
+  background-color: var(--qr-accent-soft);
 }
+
+.qiaomu-radio__station.is-current .qiaomu-radio__station-index { color: var(--qr-accent); }
 
 .qiaomu-radio__station-index {
   display: grid;
@@ -459,8 +463,6 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
-
-.qiaomu-radio__station.is-current .qiaomu-radio__station-index { color: var(--qr-accent); }
 
 .qiaomu-radio__station-index svg {
   width: 15px;
@@ -865,11 +867,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .qiaomu-radio__modes button:hover,
-  .qiaomu-radio__channels button:hover,
-  .qiaomu-radio__station:hover { background: color-mix(in srgb, var(--text-normal) 5%, transparent); }
-  .qiaomu-radio__station.is-current:hover { background: var(--qr-accent-soft); }
-  .qiaomu-radio__station-like:hover,
-  .qiaomu-radio__message button:hover { color: var(--qr-accent); background: var(--qr-accent-soft); }
+  .qiaomu-radio__channels button:hover { background: color-mix(in srgb, var(--text-normal) 5%, transparent); }
   .qiaomu-radio__transport > button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 7px 16px rgb(0 0 0 / 14%); }
 }
 

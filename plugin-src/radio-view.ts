@@ -338,7 +338,17 @@ export class QiaomuRadioView extends ItemView {
     const player = body.createEl("section", { cls: "qiaomu-radio__player" });
     const status = player.createDiv({ cls: "qiaomu-radio__status" });
     status.createSpan({ cls: `qiaomu-radio__status-dot is-${state.status}`, attr: { "aria-hidden": "true" } });
-    status.createSpan({ text: state.status === "playing" ? "ON AIR" : state.status === "loading" ? "TUNING" : "READY" });
+    status.createSpan({ cls: "qiaomu-radio__status-text", text: state.message });
+    if (station) {
+      const liked = this.plugin.isLiked(station.id);
+      const like = status.createEl("button", { cls: `qiaomu-radio__status-like${liked ? " is-liked" : ""}`, attr: { "aria-pressed": String(liked) } });
+      setIcon(like, "heart");
+      this.addScreenReaderText(like, liked ? "取消喜欢" : "喜欢");
+      like.addEventListener("click", () => {
+        this.plugin.toggleLike(station);
+        new Notice(liked ? "已取消喜欢" : "已加入喜欢");
+      });
+    }
 
     const now = player.createDiv({ cls: "qiaomu-radio__now" });
     now.createSpan({ cls: "qiaomu-radio__eyebrow", text: station ? `${station.country || "全球"} · ${station.codec || "LIVE"}` : "LIVE RADIO" });
@@ -349,20 +359,6 @@ export class QiaomuRadioView extends ItemView {
     for (let index = 0; index < 18; index += 1) {
       const bar = spectrum.createSpan();
       bar.style.setProperty("--qr-bar", String((index * 7) % 11));
-    }
-
-    const message = player.createDiv({ cls: "qiaomu-radio__message" });
-    message.createSpan({ text: state.message });
-    if (station) {
-      const liked = this.plugin.isLiked(station.id);
-      const like = message.createEl("button", { attr: { "aria-pressed": String(liked) } });
-      setIcon(like, "heart");
-      this.addScreenReaderText(like, liked ? "取消喜欢" : "喜欢");
-      like.toggleClass("is-liked", liked);
-      like.addEventListener("click", () => {
-        this.plugin.toggleLike(station);
-        new Notice(liked ? "已取消喜欢" : "已加入喜欢");
-      });
     }
     this.renderTransport(player);
   }

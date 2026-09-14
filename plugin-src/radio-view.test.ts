@@ -223,7 +223,12 @@ interface Harness {
 async function mount(options: { theme?: string; stations?: Station[]; playerStation?: Station | null } = {}): Promise<Harness> {
   const results = options.stations ?? [];
   const listener: { state: any } = {
-    state: { station: options.playerStation ?? null, status: options.playerStation ? "playing" : "idle", message: "", volume: 0.5 },
+    state: {
+      station: options.playerStation ?? null,
+      status: options.playerStation ? "playing" : "idle",
+      message: options.playerStation ? "正在直播" : "选择一家电台开始收听",
+      volume: 0.5,
+    },
   };
   const plugin = {
     data: {
@@ -360,7 +365,7 @@ describe("original player view", () => {
     });
     expect(flat(root).some((node) => node.className.includes("qiaomu-radio__ipod"))).toBe(false);
     expect(root.attributes["data-theme"]).toBe("classic");
-    expect(textOf(root)).toContain("ON AIR");
+    expect(textOf(root)).toContain("正在直播");
 
     expect(flat(root).some((node) => node.className.includes("qiaomu-radio__station-head"))).toBe(false);
     const rows = flat(root).filter((node) => /qiaomu-radio__station(\s|$)/.test(node.className));
