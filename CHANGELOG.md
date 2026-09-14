@@ -2,6 +2,13 @@
 
 All notable changes to Qiaomu Radio are documented here.
 
+## 1.1.1 - 2026-09-14
+
+- iPod volume responds while dragging without rebuilding the slider; values persist on release. LCD fill and cursor no longer inherit the host's raised white thumb.
+- Directly clickable menus remain primary. Optional wheel scrolling and arrow keys select entries; center confirms; MENU returns one level. On Now Playing, center still toggles playback.
+- Compact menu rows, consistent monochrome selection, fixed play/pause wheel marking and narrow-pane spacing. No fake battery or seek controls.
+- Website runtime and deployment are unchanged. This update continues through the original official repository while repository migration is pending.
+
 ## 1.1.0 - 2026-09-14
 
 ### Changed

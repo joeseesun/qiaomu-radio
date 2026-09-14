@@ -152,6 +152,7 @@ function installFakeDom(): void {
       if (type === "click" && this.disabled) return;
       for (const handler of this.listeners[type] ?? []) handler({ preventDefault() {}, stopPropagation() {} });
     }
+    click(): void { this.dispatch("click"); }
     private create(tag: string, options: Record<string, unknown> = {}): FakeElement {
       const node = new FakeElement();
       node.tagName = tag;
@@ -305,6 +306,36 @@ describe("iPod screen navigation", () => {
     expect(rows.map((row) => row.textContent)).toEqual(["正在播放", "频道", "电台列表", "搜索电台", "喜欢", "最近"]);
   });
 
+  it("updates volume live without replacing the range element, then commits on release", async () => {
+    const { root, plugin, listener } = await mount();
+    const slider = flat(root).find(node => node.attributes.type === "range");
+    plugin.setVolume.mockImplementation((volume: number) => listener.state()({ station: null, status: "idle", message: "选择一家电台开始收听", volume }));
+    slider.value = "73";
+    slider.dispatch("input");
+    expect(plugin.setVolume).toHaveBeenLastCalledWith(.73, false);
+    expect(flat(root).find(node => node.attributes.type === "range")).toBe(slider);
+    expect(slider.style.getPropertyValue("--ipod-volume")).toBe("73%");
+    expect(textOf(root)).toContain("73%");
+    slider.dispatch("change");
+    expect(plugin.setVolume).toHaveBeenLastCalledWith(.73);
+    expect(flat(root).find(node => node.attributes.type === "range")).toBe(slider);
+  });
+
+  it("uses wheel scrolling to select, center to open, and MENU to return one level", async () => {
+    const { root } = await mount({ stations: [station("a", "Radio A")] });
+    const wheel = flat(root).find(node => node.className === "qiaomu-radio__wheel");
+    wheel.listeners.wheel[0]({ deltaY: 24, deltaMode: 0, preventDefault() {} });
+    expect(flat(root).find(node => node.classList.contains("is-highlighted")).textContent).toBe("频道");
+    flat(root).find(node => node.className === "qiaomu-radio__wheel-center").dispatch("click");
+    expect(textOf(root)).toContain("爵士");
+    findButton(root, "爵士")?.dispatch("click");
+    await Promise.resolve();
+    findButton(root, "MENU")?.dispatch("click");
+    expect(textOf(root)).toContain("爵士");
+    findButton(root, "MENU")?.dispatch("click");
+    expect(flat(root).find(node => node.classList.contains("is-highlighted")).textContent).toBe("频道");
+  });
+
   it("closes the menu when 返回原版 is pressed", async () => {
     const { root, plugin } = await mount();
     findButton(root, "返回原版")?.dispatch("click");
@@ -314,7 +345,7 @@ describe("iPod screen navigation", () => {
   it("switches to 正在播放 and shows the current station", async () => {
     const { root } = await mount({ playerStation: station("jazz24", "Jazz24") });
     findButton(root, "正在播放")?.dispatch("click");
-    expect(textOf(root)).toContain("ON AIR");
+    expect(textOf(root)).toContain("正在直播");
     expect(textOf(root)).toContain("Jazz24");
     expect(textOf(root)).toContain("加入喜欢");
   });

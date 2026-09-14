@@ -106,10 +106,10 @@ export default class QiaomuRadioPlugin extends Plugin {
     this.refreshViews();
   }
 
-  setVolume(volume: number): void {
+  setVolume(volume: number, persist = true): void {
     this.data.settings.volume = Math.max(0, Math.min(1, volume));
     this.player.setVolume(this.data.settings.volume);
-    void this.saveState();
+    if (persist) void this.saveState();
   }
 
   setTheme(theme: RadioThemeId): void {
