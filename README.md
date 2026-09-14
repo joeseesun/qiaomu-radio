@@ -29,9 +29,11 @@
 
 ## 安装
 
-### Obsidian 社区插件
+### Obsidian 社区插件（推荐）
 
-插件正在提交 Obsidian 社区目录。审核通过并公开后，可在 Obsidian 中打开“设置 → 第三方插件 → 浏览”，搜索 `Qiaomu Radio` 安装。
+在 Obsidian 里打开 **设置 → 第三方插件 → 浏览**，搜索 `Qiaomu Radio` 安装；也可以直接点[一键安装](obsidian://show-plugin?id=qiaomu-radio)，或打开[社区目录页面](https://community.obsidian.md/plugins/qiaomu-radio)。
+
+> 插件已进入社区目录、可从客户端安装，人工复核仍在排队。目录按当前 manifest 版本读取对应的 GitHub Release，所以刚发布的新版本可能比目录页面显示得更新。
 
 ### BRAT
 
@@ -101,10 +103,11 @@ versions.json        Obsidian 版本兼容映射
 
 ## 实测与边界
 
-- `npm run check`：19 个测试文件、53 项测试通过；Web 与插件生产构建通过。
+- `npm run check`：23 个测试文件、80 项测试通过；Web 与插件生产构建通过。
+- 回归测试覆盖：列表行内容契约、渲染结果无 tips、沉浸式布局契约、iPod 屏内导航（假 DOM 真实挂载视图）。
 - Obsidian 1.13.7 / macOS：隔离 Vault 全新安装、加载全球目录、搜索 `rock`、播放 SomaFM MP3、暂停、收藏和收藏频道读回通过。
 - 插件构建约 600 KiB，低于本项目 5 MiB 发布预算。
-- 官方 Obsidian 市场审核、客户端公开搜索和移动真机属于独立验收阶段；GitHub Release 不等于已上架。
+- 官方 Obsidian 正式审核与移动真机属于独立验收阶段；GitHub Release 不等于人工审核通过。
 
 ## 许可与商业授权
 
@@ -129,7 +132,11 @@ Qiaomu Radio is a native Obsidian plugin for discovering and playing live radio 
 
 ## Install
 
-The plugin is being submitted to the Obsidian Community directory. After approval, search for **Qiaomu Radio** under **Settings → Community plugins → Browse**.
+### Community plugins (recommended)
+
+Open **Settings → Community plugins → Browse**, search for `Qiaomu Radio`, and install it. You can also use the [one-click install](obsidian://show-plugin?id=qiaomu-radio) link or the [directory page](https://community.obsidian.md/plugins/qiaomu-radio).
+
+> The plugin is listed and installable from the client while the manual review is still queued. The directory reads the GitHub release that matches the current manifest version, so a fresh release can be newer than the version shown on the directory page.
 
 For beta or manual installation, use BRAT with `joeseesun/qiaomu-radio`, or copy `main.js`, `manifest.json`, and `styles.css` from the same [GitHub Release](https://github.com/joeseesun/qiaomu-radio/releases) into `<Vault>/.obsidian/plugins/qiaomu-radio/`.
 
@@ -137,7 +144,7 @@ For beta or manual installation, use BRAT with `joeseesun/qiaomu-radio`, or copy
 
 No account or client telemetry is included. Favorites, skips, volume, and listening history stay in the current Vault's plugin data. The plugin contacts Radio Browser, `radio.qiaomu.ai` as a fallback directory, and the selected broadcaster's stream. It does not read, modify, or upload Markdown notes.
 
-Live streams can disappear, throttle requests, or be region restricted. Desktop behavior was verified in Obsidian 1.13.7 on macOS. The mobile-compatible build and responsive layout are present, but iOS and Android hardware testing is not yet claimed.
+Live streams can disappear, throttle requests, or be region restricted. Desktop behavior was verified in Obsidian 1.13.7 on macOS. A listing in the community directory and a passing automatic scan are not the same as a completed manual review; iOS and Android hardware testing is not yet claimed.
 
 ## Development
 
