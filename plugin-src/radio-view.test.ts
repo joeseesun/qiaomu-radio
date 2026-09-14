@@ -290,6 +290,14 @@ afterEach(() => {
 });
 
 describe("iPod screen navigation", () => {
+  it("keeps directory ordering for explicit filters instead of applying ambient taste ranking", async () => {
+    const { view, plugin } = await mount({ theme: "classic", stations: [station("a", "A"), station("b", "B")] });
+    plugin.rank = vi.fn((input: Station[]) => [...input].reverse());
+    (view as any).browseFilter = { tag: "classical" };
+    await (view as any).loadStations();
+    expect(plugin.rank).not.toHaveBeenCalled();
+    expect((view as any).stations.map((item: Station) => item.id)).toEqual(["a", "b"]);
+  });
   it("opens on the menu with six rows", async () => {
     const { root } = await mount();
     const rows = flat(root).filter((node) => node.className.includes("qiaomu-radio__ipod-menu-row"));

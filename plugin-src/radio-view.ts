@@ -80,7 +80,8 @@ export class QiaomuRadioView extends ItemView {
     const channel = this.channel;
     const cached = this.plugin.directory.cached?.(channel, this.directoryQuery, this.browseFilter);
     this.stations = cached?.stations ?? [];
-    if (cached && channel === "recommend") this.stations = this.plugin.rank(this.stations);
+    const personalize = channel === "recommend" && !this.directoryQuery && !Object.keys(this.browseFilter).length;
+    if (cached && personalize) this.stations = this.plugin.rank(this.stations);
     this.loading = !cached;
     this.notice = "";
     this.error = "";
@@ -91,7 +92,7 @@ export class QiaomuRadioView extends ItemView {
         : await this.plugin.directory.stations(channel, this.directoryQuery);
       if (generation !== this.requestGeneration || this.closed) return;
       this.notice = result.notice;
-      this.stations = this.channel === "recommend" ? this.plugin.rank(result.stations) : result.stations;
+      this.stations = personalize ? this.plugin.rank(result.stations) : result.stations;
     } catch (error) {
       if (generation !== this.requestGeneration || this.closed) return;
       this.error = error instanceof Error ? error.message : this.t("暂时联系不上电台目录。");

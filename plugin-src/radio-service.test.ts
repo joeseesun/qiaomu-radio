@@ -20,6 +20,9 @@ describe("directory queries", () => {
     expect(url.searchParams.get("tag")).toBe("news");
     expect(url.searchParams.get("countrycode")).toBe("GB");
     expect(url.searchParams.get("language")).toBe("english");
+    expect(url.searchParams.get("tagExact")).toBe("true");
+    expect(url.searchParams.get("languageExact")).toBe("true");
+    expect(url.searchParams.get("order")).toBe("clickcount");
     expect(request).toHaveBeenCalledTimes(1);
   });
   it("does not silently substitute an unrelated fallback for a filtered query", async () => {
