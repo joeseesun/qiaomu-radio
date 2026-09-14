@@ -5,3 +5,5 @@ dist/
 .DS_Store
 npm-debug.log*
 *.tsbuildinfo
+tools/preview/app.css
+tools/preview/styles.css

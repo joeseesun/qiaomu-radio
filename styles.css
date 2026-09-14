@@ -112,7 +112,7 @@
   min-height: 0;
   flex: 1;
   gap: 0;
-  grid-template-columns: minmax(280px, .78fr) minmax(420px, 1.22fr);
+  grid-template-columns: clamp(280px, 26vw, 380px) minmax(0, 1fr);
   background: var(--background-primary);
 }
 
