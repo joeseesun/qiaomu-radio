@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN" class="theme-light">
+<head>
+<meta charset="utf-8" />
+<title>乔木电台样式预览</title>
+<link rel="stylesheet" href="./app.css" />
+<link rel="stylesheet" href="./styles.css" />
+<style>
+  html, body { margin: 0; height: 100vh; overflow: hidden; background: var(--background-secondary); }
+  .workspace-leaf-content[data-type="qiaomu-radio-view"] > .view-header { display: none; }
+  .workspace-leaf-content[data-type="qiaomu-radio-view"] > .view-content { padding: 0; overflow: hidden; height: 100%; }
+  .workspace-leaf-content[data-type="qiaomu-radio-view"] { height: 100%; display: flex; flex-direction: column; }
+</style>
+</head>
+<body>
+<div class="workspace-leaf-content" data-type="qiaomu-radio-view">
+  <div class="view-content">
+    <div class="qiaomu-radio" data-theme="classic">
+      <div class="qiaomu-radio__shell">
+        <section class="qiaomu-radio__device">
+          <div class="qiaomu-radio__modes">
+            <button aria-pressed="true">原版</button>
+            <button aria-pressed="false">iPod</button>
+          </div>
+          <div class="qiaomu-radio__body">
+            <section class="qiaomu-radio__player">
+              <div class="qiaomu-radio__status">
+                <span class="qiaomu-radio__status-dot is-playing" aria-hidden="true"></span>
+                <span class="qiaomu-radio__status-text">正在直播</span>
+                <button class="qiaomu-radio__status-like" aria-pressed="false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  <span class="qiaomu-radio__sr-only">喜欢</span>
+                </button>
+              </div>
+              <div class="qiaomu-radio__now">
+                <span class="qiaomu-radio__eyebrow">GERMANY · MP3</span>
+                <h1>LOUNGE by rautemusik</h1>
+                <p>ambient · chill · chillout</p>
+              </div>
+              <div class="qiaomu-radio__spectrum is-playing" aria-hidden="true">
+                <span style="--qr-bar:0"></span><span style="--qr-bar:7"></span><span style="--qr-bar:3"></span>
+                <span style="--qr-bar:10"></span><span style="--qr-bar:1"></span><span style="--qr-bar:8"></span>
+                <span style="--qr-bar:4"></span><span style="--qr-bar:9"></span><span style="--qr-bar:2"></span>
+                <span style="--qr-bar:6"></span><span style="--qr-bar:0"></span><span style="--qr-bar:5"></span>
+                <span style="--qr-bar:10"></span><span style="--qr-bar:3"></span><span style="--qr-bar:7"></span>
+                <span style="--qr-bar:1"></span><span style="--qr-bar:9"></span><span style="--qr-bar:4"></span>
+              </div>
+              <div class="qiaomu-radio__transport">
+                <button aria-label="x"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 20 9 12l10-8v16zM7 19V5h2v14H7z"/></svg><span class="qiaomu-radio__sr-only">上一家电台</span></button>
+                <button class="qiaomu-radio__play"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg><span class="qiaomu-radio__sr-only">暂停</span></button>
+                <button><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4zM17 5h2v14h-2z"/></svg><span class="qiaomu-radio__sr-only">下一家电台</span></button>
+                <div class="qiaomu-radio__volume">
+                  <span aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7"/></svg></span>
+                  <label class="qiaomu-radio__sr-only" for="v">音量</label>
+                  <input id="v" type="range" min="0" max="100" value="72" />
+                  <span>72%</span>
+                </div>
+              </div>
+            </section>
+            <section class="qiaomu-radio__directory">
+              <form class="qiaomu-radio__search">
+                <span aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+                <label class="qiaomu-radio__sr-only" for="q">搜索电台</label>
+                <input id="q" type="search" value="lo" placeholder="筛选当前列表，回车搜索全球" />
+                <button type="submit">搜索全球</button>
+              </form>
+              <nav class="qiaomu-radio__channels">
+                <button aria-pressed="true">推荐</button>
+                <button aria-pressed="false">专注</button>
+                <button aria-pressed="false">松弛</button>
+                <button aria-pressed="false">爵士</button>
+                <button aria-pressed="false">古典</button>
+                <button aria-pressed="false">能量</button>
+                <button aria-pressed="false">世界</button>
+                <button aria-pressed="false">喜欢</button>
+                <button aria-pressed="false">最近</button>
+              </nav>
+              <div class="qiaomu-radio__results">
+                <div class="qiaomu-radio__results-heading"><h2>推荐</h2><span>32 家</span></div>
+                <div class="qiaomu-radio__station-list" id="list"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const stations = [
+    ["LOUNGE by rautemusik", "Germany · ambient", "MP3 · 192k", true, true],
+    ["EPIC CLASSICAL - Classical Pan Flute", "Germany · ambient", "MP3 · 192k", false],
+    ["Спокойное радио", "The Russian Federation · ambient", "MP3 · 320k", false],
+    ["Nature Radio Rain", "Canada · ambient", "MP3 · 128k", false],
+    ["- O N - Chillout on Radio", "Germany · ambient", "AAC+ · 64k", false],
+    ["Chill Lounge Florida (USA)", "The United States Of America · ambient", "MP3 · 128k", false],
+    ["AIRPORT LOUNGE RADIO", "Canada · aereoporto", "MP3 · 128k", false],
+    ["Slow Focus | NTS", "The United Kingdom Of Great Britain And Northern Ireland · ambient", "MP3 · 256k", true],
+    ["EROTICA LOUNGE", "The United States Of America · ambient", "MP3", false],
+    ["100% ACID JAZZ", "Canada · acid", "MP3 · 128k", false],
+    ["Lounge Radio Ibiza", "Germany · ambient", "MP3 · 192k", false],
+    ["MyNoise Pure Nature", "Belgium · ambient", "MP3 · 160k", false]
+  ];
+  const heart = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+  const eq = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 11v2"/></svg>';
+  document.getElementById('list').innerHTML = stations.map((s, i) => `
+    <div class="qiaomu-radio__station${s[4] ? ' is-current' : ''}">
+      <span class="qiaomu-radio__station-index" aria-hidden="true">${s[4] ? eq : i + 1}</span>
+      <button class="qiaomu-radio__station-main">
+        <span class="qiaomu-radio__station-copy">
+          <strong>${s[0]}</strong>
+          <span class="qiaomu-radio__station-meta"><span class="qiaomu-radio__station-where">${s[1]}</span><span class="qiaomu-radio__station-quality">${s[2]}</span></span>
+        </span>
+      </button>
+      <button class="qiaomu-radio__station-like${s[3] ? ' is-liked' : ''}" aria-pressed="${s[3]}">${heart}<span class="qiaomu-radio__sr-only">喜欢</span></button>
+    </div>`).join('');
+</script>
+</body>
+</html>

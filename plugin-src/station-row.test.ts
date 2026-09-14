@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { stationRowContent } from "./station-row";
+import { cleanStationName, stationRowContent } from "./station-row";
 import type { Station } from "./types";
 
 const station = (overrides: Partial<Station> = {}): Station => ({
@@ -22,20 +22,46 @@ const station = (overrides: Partial<Station> = {}): Station => ({
 });
 
 describe("station list row content", () => {
-  it("numbers rows from one for table position", () => {
+  it("strips provider decoration from raw directory names", () => {
+    expect(cleanStationName("___LOUNGE__ by rautemusik (rm.fm)")).toBe("LOUNGE by rautemusik (rm.fm)");
+    expect(cleanStationName("Chill Lounge Florida (USA) 128k mp3")).toBe("Chill Lounge Florida (USA)");
+    expect(cleanStationName("Slow Focus | NTS")).toBe("Slow Focus | NTS");
+    expect(cleanStationName("Jazz24 [128k MP3]")).toBe("Jazz24");
+  });
+
+  it("keeps meaningful brackets even when other brackets were quality tags", () => {
+    expect(cleanStationName("Radio Swiss Jazz (128k)")).toBe("Radio Swiss Jazz");
+    expect(cleanStationName("Radio Paradise (USA)")).toBe("Radio Paradise (USA)");
+    expect(cleanStationName("SomaFM Groove Salad (128k MP3)")).toBe("SomaFM Groove Salad");
+  });
+
+  it("shortens very long names instead of letting them run", () => {
+    const long = "A".repeat(30) + " " + "B".repeat(60);
+    const cleaned = cleanStationName(long);
+    expect(cleaned.length).toBeLessThanOrEqual(65);
+    expect(cleaned.endsWith("…")).toBe(true);
+  });
+
+  it("falls back to the raw name when cleaning empties it", () => {
+    expect(stationRowContent(station({ name: "___" }), 0, false).name).toBe("___");
+  });
+
+  it("numbers rows from one for list position", () => {
     expect(stationRowContent(station(), 0, false).index).toBe(1);
     expect(stationRowContent(station(), 41, false).index).toBe(42);
   });
 
-  it("keeps country and first tag as the secondary column", () => {
-    expect(stationRowContent(station(), 0, false).detail).toBe("The United States Of America · jazz");
+  it("keeps country and first tag on the secondary line", () => {
+    const row = stationRowContent(station(), 0, false);
+    expect(row.meta).toBe("The United States Of America · jazz");
+    expect(row.genre).toBe("jazz");
   });
 
   it("falls back to a global label when the directory has no country", () => {
-    expect(stationRowContent(station({ country: "", tags: [] }), 0, false).detail).toBe("全球");
+    expect(stationRowContent(station({ country: "", tags: [] }), 0, false).meta).toBe("全球 · MP3 · 128k");
   });
 
-  it("formats bitrate for the quality column and keeps codec only streams", () => {
+  it("formats bitrate for the quality chip and keeps codec only streams", () => {
     expect(stationRowContent(station(), 0, false).quality).toBe("MP3 · 128k");
     expect(stationRowContent(station({ bitrate: 0 }), 0, false).quality).toBe("MP3");
     expect(stationRowContent(station({ codec: "", bitrate: 0 }), 0, false).quality).toBe("LIVE");
@@ -62,20 +88,39 @@ describe("immersive player and list contract", () => {
     expect(device).not.toMatch(/border|box-shadow|border-radius/);
   });
 
-  it("renders the station list as stable table columns without capsule rows", () => {
-    const head = css.match(/\.qiaomu-radio__station-head\s*{([^}]*)}/)?.[1] ?? "";
+  it("renders station rows as a three column list without capsule cards", () => {
     const row = css.match(/\.qiaomu-radio__station\s*{([^}]*)}/)?.[1] ?? "";
-    for (const rule of [head, row]) {
-      expect(rule).not.toMatch(/border-radius/);
-      expect(rule).not.toMatch(/border-left|border-inline-start/);
-    }
-    expect(css).toMatch(/\.qiaomu-radio__station-head,\s*\.qiaomu-radio__station\s*{[^}]*display: grid;/);
-    expect(css).toMatch(/\.qiaomu-radio__station-head,\s*\.qiaomu-radio__station\s*{[^}]*grid-template-columns:/);
-    expect(css).not.toMatch(/\.qiaomu-radio__station\s*{[^}]*background:\s*var\(--background-secondary\)/);
+    expect(row).toContain("display: grid");
+    expect(row).toMatch(/grid-template-columns:\s*32px minmax\(0, 1fr\) 32px/);
+    expect(row).not.toMatch(/border-left|border-inline-start/);
+    expect(row).not.toMatch(/background:\s*var\(--background-secondary\)/);
+    expect(css).not.toContain(".qiaomu-radio__station-head");
   });
 
-  it("marks only the current station with the accent background", () => {
-    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background: var\(--qr-accent-soft\)/);
+  it("keeps the list free of zebra striping so only the current row is highlighted", () => {
+    expect(css).not.toMatch(/nth-child\((?:odd|even)\)/);
+    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background-color: var\(--qr-accent-soft\)/);
+    expect(css).toMatch(/\.qiaomu-radio__station\.is-current \.qiaomu-radio__station-index\s*{[^}]*color: var\(--qr-accent\)/);
+  });
+
+  it("gives the favourite control a visible resting state", () => {
+    expect(css).toMatch(/\.qiaomu-radio__station-like\s*{[^}]*color: var\(--text-faint\)/);
+    expect(css).toMatch(/\.qiaomu-radio__station-like:hover/);
+  });
+
+  it("paints the row background explicitly so host zebra rules cannot leak in", () => {
+    const row = css.match(/\.qiaomu-radio__station\s*{([^}]*)}/)?.[1] ?? "";
+    expect(row).toMatch(/background:\s*transparent/);
+  });
+
+  it("keeps the theme switch clear of the search field", () => {
+    const modes = css.match(/\.qiaomu-radio__modes\s*{([^}]*)}/)?.[1] ?? "";
+    const directory = css.match(/\.qiaomu-radio__directory\s*{([^}]*)}/)?.[1] ?? "";
+    const top = Number(modes.match(/top:\s*(\d+)px/)?.[1] ?? "0");
+    const padding = Number(directory.match(/padding:\s*(\d+)px/)?.[1] ?? "0");
+    expect(modes).toMatch(/position: absolute/);
+    expect(top + 24).toBeLessThanOrEqual(padding);
+    expect(css).toMatch(/\.qiaomu-radio__search button\s*{[^}]*white-space: nowrap/);
   });
 
   it("never generates hover tips from the player view", () => {

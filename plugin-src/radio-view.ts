@@ -274,7 +274,7 @@ export class QiaomuRadioView extends ItemView {
       const current = this.playerState.station?.id === station.id;
       const button = results.createEl("button", { cls: `qiaomu-radio__ipod-station${current ? " is-current" : ""}` });
       const copy = button.createSpan();
-      copy.createEl("strong", { text: station.name });
+      copy.createEl("strong", { text: stationRowContent(station, 0, false).name });
       copy.createSpan({ text: `${station.country || "全球"} · ${station.tags[0] || station.codec || "LIVE"}` });
       const icon = button.createSpan({ attr: { "aria-hidden": "true" } });
       setIcon(icon, current && this.playerState.status === "playing" ? "audio-lines" : "chevron-right");
@@ -338,7 +338,17 @@ export class QiaomuRadioView extends ItemView {
     const player = body.createEl("section", { cls: "qiaomu-radio__player" });
     const status = player.createDiv({ cls: "qiaomu-radio__status" });
     status.createSpan({ cls: `qiaomu-radio__status-dot is-${state.status}`, attr: { "aria-hidden": "true" } });
-    status.createSpan({ text: state.status === "playing" ? "ON AIR" : state.status === "loading" ? "TUNING" : "READY" });
+    status.createSpan({ cls: "qiaomu-radio__status-text", text: state.message });
+    if (station) {
+      const liked = this.plugin.isLiked(station.id);
+      const like = status.createEl("button", { cls: `qiaomu-radio__status-like${liked ? " is-liked" : ""}`, attr: { "aria-pressed": String(liked) } });
+      setIcon(like, "heart");
+      this.addScreenReaderText(like, liked ? "取消喜欢" : "喜欢");
+      like.addEventListener("click", () => {
+        this.plugin.toggleLike(station);
+        new Notice(liked ? "已取消喜欢" : "已加入喜欢");
+      });
+    }
 
     const now = player.createDiv({ cls: "qiaomu-radio__now" });
     now.createSpan({ cls: "qiaomu-radio__eyebrow", text: station ? `${station.country || "全球"} · ${station.codec || "LIVE"}` : "LIVE RADIO" });
@@ -349,20 +359,6 @@ export class QiaomuRadioView extends ItemView {
     for (let index = 0; index < 18; index += 1) {
       const bar = spectrum.createSpan();
       bar.style.setProperty("--qr-bar", String((index * 7) % 11));
-    }
-
-    const message = player.createDiv({ cls: "qiaomu-radio__message" });
-    message.createSpan({ text: state.message });
-    if (station) {
-      const liked = this.plugin.isLiked(station.id);
-      const like = message.createEl("button", { attr: { "aria-pressed": String(liked) } });
-      setIcon(like, "heart");
-      this.addScreenReaderText(like, liked ? "取消喜欢" : "喜欢");
-      like.toggleClass("is-liked", liked);
-      like.addEventListener("click", () => {
-        this.plugin.toggleLike(station);
-        new Notice(liked ? "已取消喜欢" : "已加入喜欢");
-      });
     }
     this.renderTransport(player);
   }
@@ -469,11 +465,6 @@ export class QiaomuRadioView extends ItemView {
       return;
     }
 
-    const tableHead = results.createDiv({ cls: "qiaomu-radio__station-head", attr: { "aria-hidden": "true" } });
-    tableHead.createSpan({ text: "#" });
-    tableHead.createSpan({ text: "电台" });
-    tableHead.createSpan({ text: "音质" });
-    tableHead.createSpan();
     const list = results.createDiv({ cls: "qiaomu-radio__station-list" });
     visible.slice(0, 60).forEach((station, index) => this.renderStation(list, station, index));
   }
@@ -489,11 +480,10 @@ export class QiaomuRadioView extends ItemView {
     const play = row.createEl("button", { cls: "qiaomu-radio__station-main" });
     const copy = play.createSpan({ cls: "qiaomu-radio__station-copy" });
     copy.createEl("strong", { text: rowContent.name });
-    copy.createSpan({ text: rowContent.detail });
+    const meta = copy.createSpan({ cls: "qiaomu-radio__station-meta" });
+    meta.createSpan({ cls: "qiaomu-radio__station-where", text: rowContent.meta });
+    meta.createSpan({ cls: "qiaomu-radio__station-quality", text: rowContent.quality });
     play.addEventListener("click", () => void this.plugin.playStation(station, this.visibleStations()));
-
-    const quality = row.createSpan({ cls: "qiaomu-radio__station-quality", text: rowContent.quality });
-    quality.setAttribute("aria-hidden", "true");
 
     const like = row.createEl("button", { cls: "qiaomu-radio__station-like", attr: { "aria-pressed": String(rowContent.liked) } });
     setIcon(like, "heart");
