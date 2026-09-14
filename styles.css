@@ -73,8 +73,7 @@
 .qiaomu-radio__status,
 .qiaomu-radio__message,
 .qiaomu-radio__volume,
-.qiaomu-radio__channels,
-.qiaomu-radio__station {
+.qiaomu-radio__channels {
   display: flex;
   align-items: center;
 }
@@ -82,32 +81,30 @@
 .qiaomu-radio__modes {
   position: absolute;
   z-index: 3;
-  top: 18px;
-  right: 18px;
-  padding: 3px;
+  top: 22px;
+  right: 24px;
+  display: flex;
+  align-items: center;
   gap: 2px;
   flex: 0 0 auto;
-  border: 1px solid var(--qr-line);
-  border-radius: 10px;
-  background: var(--background-secondary);
 }
 
 .qiaomu-radio__modes button {
-  min-height: 30px;
-  padding: 4px 11px;
+  min-height: 24px;
+  padding: 2px 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   background: transparent;
   box-shadow: none;
-  color: var(--text-muted);
-  font-size: 12px;
+  color: var(--text-faint);
+  font-size: 11px;
 }
 
 .qiaomu-radio__modes button[aria-pressed="true"] {
-  background: var(--background-primary);
-  color: var(--text-normal);
+  background: var(--qr-accent-soft);
+  color: var(--qr-accent);
   font-weight: 650;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--background-modifier-box-shadow) 28%, transparent);
+  box-shadow: none;
 }
 
 .qiaomu-radio__body {
@@ -127,9 +124,9 @@
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  padding: clamp(24px, 4vw, 56px);
+  padding: clamp(22px, 3vw, 34px);
   background:
-    radial-gradient(circle at 25% 15%, color-mix(in srgb, var(--qr-accent) 18%, transparent), transparent 42%),
+    radial-gradient(120% 80% at 12% 0%, color-mix(in srgb, var(--qr-accent) 9%, transparent), transparent 58%),
     var(--qr-panel);
 }
 
@@ -137,8 +134,8 @@
   gap: 8px;
   color: var(--text-muted);
   font-size: 10px;
-  font-weight: 750;
-  letter-spacing: .16em;
+  font-weight: 700;
+  letter-spacing: .14em;
 }
 
 .qiaomu-radio__status-dot {
@@ -156,18 +153,18 @@
 
 .qiaomu-radio__now {
   display: flex;
-  min-height: 180px;
+  min-height: 160px;
   flex: 1;
   flex-direction: column;
   justify-content: center;
+  gap: 12px;
 }
 
 .qiaomu-radio__eyebrow {
-  margin-bottom: 12px;
-  color: var(--qr-accent);
-  font-size: 11px;
-  font-weight: 720;
-  letter-spacing: .12em;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .1em;
   text-transform: uppercase;
 }
 
@@ -180,30 +177,32 @@
 }
 
 .qiaomu-radio__now h1 {
+  display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
-  font-size: clamp(28px, 4.2vw, 58px);
-  letter-spacing: -.055em;
-  line-height: 1;
-  text-overflow: ellipsis;
+  font-size: clamp(23px, 2.5vw, 36px);
+  font-weight: 680;
+  letter-spacing: -.028em;
+  line-height: 1.14;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .qiaomu-radio__now p {
-  max-width: 36ch;
-  margin-top: 12px;
+  max-width: 40ch;
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .qiaomu-radio__spectrum {
   display: flex;
-  height: 42px;
+  height: 32px;
   align-items: end;
-  gap: 5px;
-  margin-bottom: 18px;
+  gap: 4px;
+  margin-top: 20px;
 }
 
 .qiaomu-radio__spectrum span {
@@ -239,16 +238,23 @@
 .qiaomu-radio__message button,
 .qiaomu-radio__station-like {
   display: grid;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   padding: 0;
   place-items: center;
   border: 0;
   border-radius: 50%;
   background: transparent;
   box-shadow: none;
-  color: var(--text-muted);
+  color: var(--text-faint);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qiaomu-radio__station-like:hover {
+    background: color-mix(in srgb, var(--text-normal) 7%, transparent);
+    color: var(--text-normal);
+  }
 }
 
 .qiaomu-radio .is-liked { color: var(--qr-accent); }
@@ -256,30 +262,30 @@
 
 .qiaomu-radio__transport {
   display: grid;
-  grid-template-columns: 42px 54px 42px minmax(130px, 1fr);
+  grid-template-columns: 38px 50px 38px minmax(120px, 1fr);
   align-items: center;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .qiaomu-radio__transport > button {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   place-items: center;
   border: 1px solid var(--qr-line);
   border-radius: 50%;
-  background: var(--qr-panel-raised);
+  background: transparent;
   box-shadow: none;
-  color: var(--text-normal);
+  color: var(--text-muted);
 }
 
 .qiaomu-radio__transport > button:disabled { opacity: .35; }
 
 .qiaomu-radio__transport > .qiaomu-radio__play {
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   border: 0;
   background: var(--qr-accent);
   color: white;
@@ -301,7 +307,7 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
-  padding: 58px 24px 18px;
+  padding: 20px 24px 16px;
   border-inline-start: 1px solid var(--qr-line);
   background: var(--background-primary);
 }
@@ -312,11 +318,14 @@
   grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 5px 6px 5px 13px;
-  border: 1px solid var(--qr-line);
-  border-radius: 13px;
-  background: var(--qr-panel-raised);
+  padding: 0 4px 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--qr-line);
+  border-radius: 0;
+  background: transparent;
 }
+
+.qiaomu-radio__search:focus-within { border-bottom-color: var(--qr-accent); }
 
 .qiaomu-radio__search > span { color: var(--text-muted); }
 .qiaomu-radio__search svg { width: 16px; height: 16px; }
@@ -330,7 +339,19 @@
   box-shadow: none;
 }
 
-.qiaomu-radio__search button,
+.qiaomu-radio__search button {
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.qiaomu-radio__search button:hover { color: var(--qr-accent); background: var(--qr-accent-soft); }
+
 .qiaomu-radio__empty button {
   min-height: 32px;
   padding: 4px 11px;
@@ -343,8 +364,8 @@
 }
 
 .qiaomu-radio__channels {
-  gap: 5px;
-  margin: 12px 0 14px;
+  gap: 4px;
+  margin: 10px 0 10px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -353,13 +374,13 @@
 
 .qiaomu-radio__channels button {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 28px;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
+  padding: 3px 9px;
   flex: 0 0 auto;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 7px;
   background: transparent;
   box-shadow: none;
   color: var(--text-muted);
@@ -367,9 +388,9 @@
 }
 
 .qiaomu-radio__channels button[aria-pressed="true"] {
-  border-color: color-mix(in srgb, var(--qr-accent) 40%, transparent);
+  border-color: transparent;
   background: var(--qr-accent-soft);
-  color: var(--text-normal);
+  color: var(--qr-accent);
   font-weight: 650;
 }
 
@@ -384,17 +405,23 @@
 
 .qiaomu-radio__results-heading {
   display: flex;
-  min-height: 30px;
+  min-height: 26px;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
-.qiaomu-radio__results-heading h2 { font-size: 14px; }
+.qiaomu-radio__results-heading h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+
 .qiaomu-radio__results-heading span,
-.qiaomu-radio__notice { color: var(--text-muted); font-size: 11px; }
-.qiaomu-radio__notice { padding: 0 4px 8px; }
+.qiaomu-radio__notice { color: var(--text-faint); font-size: 11px; }
+.qiaomu-radio__notice { margin: 0; padding: 0 2px 6px; }
 
 .qiaomu-radio__station-list {
   min-height: 0;
@@ -404,29 +431,20 @@
   scrollbar-gutter: stable;
 }
 
-.qiaomu-radio__station-head,
 .qiaomu-radio__station {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 92px 38px;
-  align-items: center;
-}
-
-.qiaomu-radio__station-head {
-  min-height: 30px;
-  padding: 0 4px;
-  border-bottom: 1px solid var(--qr-line);
-  color: var(--text-faint);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-
-.qiaomu-radio__station {
   min-width: 0;
-  min-height: 56px;
-  padding: 3px 4px;
-  border-bottom: 1px solid color-mix(in srgb, var(--qr-line) 68%, transparent);
+  min-height: 46px;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qiaomu-radio__station:hover { background: color-mix(in srgb, var(--text-normal) 5%, transparent); }
 }
 
 .qiaomu-radio__station.is-current {
@@ -435,12 +453,14 @@
 
 .qiaomu-radio__station-index {
   display: grid;
-  width: 34px;
+  width: 32px;
   place-items: center;
   color: var(--text-faint);
-  font-family: var(--font-monospace);
-  font-size: 10px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
+
+.qiaomu-radio__station.is-current .qiaomu-radio__station-index { color: var(--qr-accent); }
 
 .qiaomu-radio__station-index svg {
   width: 15px;
@@ -451,9 +471,9 @@
 .qiaomu-radio__station-main {
   display: flex;
   min-width: 0;
-  min-height: 48px;
+  min-height: 42px;
   align-items: center;
-  padding: 5px 8px 5px 0;
+  padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -466,33 +486,57 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .qiaomu-radio__station-copy strong,
-.qiaomu-radio__station-copy span {
+.qiaomu-radio__station-meta > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.qiaomu-radio__station-copy strong { font-size: 13px; font-weight: 620; }
-.qiaomu-radio__station-copy span { color: var(--text-muted); font-size: 11px; }
+.qiaomu-radio__station-copy strong {
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: -.006em;
+}
+
+.qiaomu-radio__station.is-current .qiaomu-radio__station-copy strong { font-weight: 660; }
+
+.qiaomu-radio__station-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.qiaomu-radio__station-where {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
 .qiaomu-radio__station-quality {
-  overflow: hidden;
+  flex: 0 0 auto;
   color: var(--text-faint);
   font-size: 10px;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
+  letter-spacing: .04em;
 }
+
+.qiaomu-radio__station-quality::before {
+  content: "·";
+  margin-right: 6px;
+}
+
 .qiaomu-radio__station-like svg { width: 14px; height: 14px; }
 
 .qiaomu-radio__empty {
   display: grid;
-  min-height: 140px;
+  min-height: 120px;
   place-items: center;
-  padding: 24px;
+  padding: 20px;
   border: 1px dashed var(--qr-line);
   border-radius: 14px;
   color: var(--text-muted);
@@ -848,16 +892,15 @@
   .qiaomu-radio__modes button { min-height: 28px; padding-inline: 8px; }
   .qiaomu-radio__player { min-height: 350px; padding: 22px; }
   .qiaomu-radio__now h1 { font-size: clamp(28px, 11cqw, 44px); }
-  .qiaomu-radio__transport { grid-template-columns: 42px 54px 42px; justify-content: center; }
+  .qiaomu-radio__transport { grid-template-columns: 38px 50px 38px; justify-content: center; }
   .qiaomu-radio__volume { grid-column: 1 / -1; }
   .qiaomu-radio__directory { min-height: 560px; padding: 12px; }
+  .qiaomu-radio__modes { top: 14px; right: 12px; }
   .qiaomu-radio__search { grid-template-columns: 18px minmax(0, 1fr); }
   .qiaomu-radio__search button { display: none; }
   .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__shell { padding: 0; }
-  .qiaomu-radio__station-head,
-  .qiaomu-radio__station { grid-template-columns: 30px minmax(0, 1fr) 36px; }
-  .qiaomu-radio__station-quality,
-  .qiaomu-radio__station-head span:nth-child(3) { display: none; }
+  .qiaomu-radio__station { grid-template-columns: 26px minmax(0, 1fr) 32px; }
+  .qiaomu-radio__station-quality { display: none; }
 }
 
 @keyframes qiaomu-radio-spectrum {

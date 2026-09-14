@@ -352,7 +352,7 @@ describe("iPod screen navigation", () => {
 });
 
 describe("original player view", () => {
-  it("renders the frameless player with table headers and numbered rows", async () => {
+  it("renders the frameless player with one compact list row per station", async () => {
     const { root, plugin } = await mount({
       theme: "classic",
       stations: [station("a", "Radio A"), station("b", "Radio B")],
@@ -362,12 +362,18 @@ describe("original player view", () => {
     expect(root.attributes["data-theme"]).toBe("classic");
     expect(textOf(root)).toContain("ON AIR");
 
-    const head = flat(root).find((node) => node.className.includes("qiaomu-radio__station-head"));
-    expect(head.textContent).toBe("#电台音质");
+    expect(flat(root).some((node) => node.className.includes("qiaomu-radio__station-head"))).toBe(false);
     const rows = flat(root).filter((node) => /qiaomu-radio__station(\s|$)/.test(node.className));
     expect(rows).toHaveLength(2);
     expect(rows[0].className).toContain("is-current");
     expect(rows[1].className).not.toContain("is-current");
+
+    const firstRow = rows[0].textContent as string;
+    expect(firstRow).toContain("1");
+    expect(firstRow).toContain("Radio A");
+    expect(firstRow).toContain("China · jazz");
+    expect(firstRow).toContain("MP3 · 128k");
+    expect(flat(root).some((node) => node.className.includes("qiaomu-radio__station-quality"))).toBe(true);
 
     const rowLabels = flat(root).filter((node) => node.className.includes("qiaomu-radio__sr-only")).map((node) => node.textContent);
     expect(rowLabels).toContain("喜欢 Radio A");

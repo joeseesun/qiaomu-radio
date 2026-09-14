@@ -469,11 +469,6 @@ export class QiaomuRadioView extends ItemView {
       return;
     }
 
-    const tableHead = results.createDiv({ cls: "qiaomu-radio__station-head", attr: { "aria-hidden": "true" } });
-    tableHead.createSpan({ text: "#" });
-    tableHead.createSpan({ text: "电台" });
-    tableHead.createSpan({ text: "音质" });
-    tableHead.createSpan();
     const list = results.createDiv({ cls: "qiaomu-radio__station-list" });
     visible.slice(0, 60).forEach((station, index) => this.renderStation(list, station, index));
   }
@@ -489,11 +484,10 @@ export class QiaomuRadioView extends ItemView {
     const play = row.createEl("button", { cls: "qiaomu-radio__station-main" });
     const copy = play.createSpan({ cls: "qiaomu-radio__station-copy" });
     copy.createEl("strong", { text: rowContent.name });
-    copy.createSpan({ text: rowContent.detail });
+    const meta = copy.createSpan({ cls: "qiaomu-radio__station-meta" });
+    meta.createSpan({ cls: "qiaomu-radio__station-where", text: rowContent.meta });
+    meta.createSpan({ cls: "qiaomu-radio__station-quality", text: rowContent.quality });
     play.addEventListener("click", () => void this.plugin.playStation(station, this.visibleStations()));
-
-    const quality = row.createSpan({ cls: "qiaomu-radio__station-quality", text: rowContent.quality });
-    quality.setAttribute("aria-hidden", "true");
 
     const like = row.createEl("button", { cls: "qiaomu-radio__station-like", attr: { "aria-pressed": String(rowContent.liked) } });
     setIcon(like, "heart");
