@@ -1,4 +1,6 @@
 import type { Station } from "./types";
+import { countryLabel, genreLabel } from "./catalog";
+import { displayName, translate, type Locale } from "./i18n";
 
 export interface StationRowContent {
   /** 1-based list position, replaced by an equalizer icon while playing. */
@@ -57,18 +59,19 @@ export function cleanStationName(raw: string): string {
  * Content contract for one list row. The view only paints this data, so column
  * layout, accessible names and tooltip-free labels stay testable without a DOM.
  */
-export function stationRowContent(station: Station, index: number, liked: boolean): StationRowContent {
+export function stationRowContent(station: Station, index: number, liked: boolean, locale: Locale = "zh"): StationRowContent {
   const name = cleanStationName(station.name) || station.name;
-  const genre = station.tags[0] ?? "";
+  const genre = translate(genreLabel(station.tags[0] ?? ""), locale);
   const quality = [station.codec, station.bitrate ? `${station.bitrate}k` : ""].filter(Boolean).join(" · ") || "LIVE";
-  const meta = [station.country || "全球", genre || quality].filter(Boolean).join(" · ");
+  const country = locale === "zh" ? countryLabel(station.countryCode, station.country) : displayName(station.countryCode, "region", locale, station.country || translate("全球", locale));
+  const meta = [country, genre].filter(Boolean).join(" · ");
   return {
     index: index + 1,
     name,
     meta,
     genre,
     quality,
-    likeLabel: liked ? `取消喜欢 ${name}` : `喜欢 ${name}`,
+    likeLabel: `${translate(liked ? "取消喜欢" : "加入喜欢", locale)} ${name}`,
     liked,
   };
 }

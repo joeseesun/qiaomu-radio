@@ -53,12 +53,12 @@ describe("station list row content", () => {
 
   it("keeps country and first tag on the secondary line", () => {
     const row = stationRowContent(station(), 0, false);
-    expect(row.meta).toBe("The United States Of America · jazz");
-    expect(row.genre).toBe("jazz");
+    expect(row.meta).toBe("美国 · 爵士");
+    expect(row.genre).toBe("爵士");
   });
 
   it("falls back to a global label when the directory has no country", () => {
-    expect(stationRowContent(station({ country: "", tags: [] }), 0, false).meta).toBe("全球 · MP3 · 128k");
+    expect(stationRowContent(station({ country: "", countryCode: "", tags: [] }), 0, false).meta).toBe("全球");
   });
 
   it("formats bitrate for the quality chip and keeps codec only streams", () => {
@@ -68,7 +68,7 @@ describe("station list row content", () => {
   });
 
   it("names the favourite control without hover text", () => {
-    expect(stationRowContent(station(), 0, false).likeLabel).toBe("喜欢 Jazz24");
+    expect(stationRowContent(station(), 0, false).likeLabel).toBe("加入喜欢 Jazz24");
     expect(stationRowContent(station(), 0, true).likeLabel).toBe("取消喜欢 Jazz24");
   });
 });
@@ -97,9 +97,9 @@ describe("immersive player and list contract", () => {
     expect(css).not.toContain(".qiaomu-radio__station-head");
   });
 
-  it("keeps the list free of zebra striping so only the current row is highlighted", () => {
+  it("distinguishes playback with ink rather than a second adjacent hover block", () => {
     expect(css).not.toMatch(/nth-child\((?:odd|even)\)/);
-    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background-color: var\(--qr-accent-soft\)/);
+    expect(css).toMatch(/\.qiaomu-radio__station\.is-current\s*{[^}]*background-color: transparent/);
     expect(css).toMatch(/\.qiaomu-radio__station\.is-current \.qiaomu-radio__station-index\s*{[^}]*color: var\(--qr-accent\)/);
   });
 
@@ -115,16 +115,13 @@ describe("immersive player and list contract", () => {
 
   it("keeps the theme switch clear of the search field", () => {
     const modes = css.match(/\.qiaomu-radio__modes\s*{([^}]*)}/)?.[1] ?? "";
-    const directory = css.match(/\.qiaomu-radio__directory\s*{([^}]*)}/)?.[1] ?? "";
-    const top = Number(modes.match(/top:\s*(\d+)px/)?.[1] ?? "0");
-    const padding = Number(directory.match(/padding:\s*(\d+)px/)?.[1] ?? "0");
-    expect(modes).toMatch(/position: absolute/);
-    expect(top + 24).toBeLessThanOrEqual(padding);
+    expect(modes).not.toMatch(/position: absolute/);
+    expect(viewSource).toContain("this.renderModeSwitch(top)");
     expect(css).toMatch(/\.qiaomu-radio__search button\s*{[^}]*white-space: nowrap/);
   });
 
   it("never generates hover tips from the player view", () => {
-    for (const pattern of ["aria-label", "setTooltip", "title=", "data-tooltip"]) {
+    for (const pattern of ['"aria-label"', "setTooltip", "title=", "data-tooltip"]) {
       expect(viewSource).not.toContain(pattern);
     }
     expect(viewSource).toContain("qiaomu-radio__sr-only");

@@ -138,6 +138,8 @@ function installFakeDom(): void {
       if (at >= 0) siblings.splice(at, 1);
       this.parentElement = null;
     }
+    querySelector(): null { return null; }
+    querySelectorAll(): FakeElement[] { return []; }
     empty(): void {
       for (const child of this.children) child.parentElement = null;
       this.children.length = 0;
@@ -232,7 +234,7 @@ async function mount(options: { theme?: string; stations?: Station[]; playerStat
   };
   const plugin = {
     data: {
-      settings: { defaultMood: "recommend", volume: 0.5, theme: options.theme ?? "pocket" },
+      settings: { defaultMood: "recommend", volume: 0.5, language: "zh", theme: options.theme ?? "pocket" },
       profile: { likedStationIds: [], skippedStationIds: [], tagWeights: {}, history: [] },
     },
     directory: { stations: vi.fn(async () => ({ stations: results, notice: "" })) },
@@ -357,6 +359,38 @@ describe("iPod screen navigation", () => {
 });
 
 describe("original player view", () => {
+  it("stages grouped filters and applies them together", async () => {
+    const { root, plugin } = await mount({ theme: "classic" });
+    findButton(root, "浏览")?.dispatch("click");
+    expect(textOf(root)).toContain("浏览电台");
+    expect(textOf(root)).toContain("全部语言");
+    findButton(root, "新闻")?.dispatch("click");
+    expect(plugin.directory.stations).toHaveBeenCalledTimes(1);
+    findButton(root, "查看电台")?.dispatch("click");
+    await Promise.resolve();
+    expect(plugin.directory.stations).toHaveBeenLastCalledWith("recommend", "", { tag: "news" });
+    expect(textOf(root)).not.toContain("浏览电台");
+  });
+
+  it("does not reload the selected channel", async () => {
+    const { root, plugin } = await mount({ theme: "classic" });
+    findButton(root, "推荐")?.dispatch("click");
+    expect(plugin.directory.stations).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores remote results after switching to local history", async () => {
+    const { root, plugin } = await mount({ theme: "classic" });
+    let resolve!: (result: { stations: Station[]; notice: string }) => void;
+    plugin.directory.stations.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    findButton(root, "专注")?.dispatch("click");
+    findButton(root, "最近")?.dispatch("click");
+    resolve({ stations: [station("late", "Late response")], notice: "" });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(textOf(root)).not.toContain("Late response");
+    expect(textOf(root)).toContain("播放过的电台");
+  });
+
   it("renders the frameless player with one compact list row per station", async () => {
     const { root, plugin } = await mount({
       theme: "classic",
@@ -376,12 +410,12 @@ describe("original player view", () => {
     const firstRow = rows[0].textContent as string;
     expect(firstRow).toContain("1");
     expect(firstRow).toContain("Radio A");
-    expect(firstRow).toContain("China · jazz");
+    expect(firstRow).toContain("中国 · 爵士");
     expect(firstRow).toContain("MP3 · 128k");
     expect(flat(root).some((node) => node.className.includes("qiaomu-radio__station-quality"))).toBe(true);
 
     const rowLabels = flat(root).filter((node) => node.className.includes("qiaomu-radio__sr-only")).map((node) => node.textContent);
-    expect(rowLabels).toContain("喜欢 Radio A");
+    expect(rowLabels).toContain("加入喜欢 Radio A");
   });
 
   it("switches the player theme from the visible mode buttons", async () => {
