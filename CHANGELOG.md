@@ -2,6 +2,13 @@
 
 All notable changes to Qiaomu Radio are documented here.
 
+## 1.1.2 - 2026-09-14
+
+- Repeated clicks on the same connecting or playing station no longer restart playback.
+- Superseded requests and playback cancellations cannot affect the newly selected station.
+- Failed streams retry the same station once after 1.5 seconds, with a 30-second startup limit per attempt. Further failure stops on that station instead of cycling through the list.
+- Pause, station changes and plugin unload cancel pending playback recovery. Website playback is unchanged.
+
 ## 1.1.1 - 2026-09-14
 
 - iPod volume responds while dragging without rebuilding the slider; values persist on release. LCD fill and cursor no longer inherit the host's raised white thumb.
