@@ -2,6 +2,13 @@
 
 All notable changes to Qiaomu Radio are documented here.
 
+## 1.1.3 - 2026-09-15
+
+- Mobile Browse actions and trailing station rows clear Obsidian's floating navigation and system safe area; hidden navigation releases its reserved space.
+- Browse keeps an independently scrollable body, supports wrapped action labels, and retains 44px touch targets.
+- Short-screen iPod scrolling preserves access to the top; mobile search uses 16px text and common navigation/favorite controls have larger touch targets.
+- Short-height mobile layouts keep player and directory regions scrollable. Removed a duplicate CSS gap declaration. Website and playback behavior are unchanged.
+
 ## 1.1.2 - 2026-09-14
 
 - Repeated clicks on the same connecting or playing station no longer restart playback.
