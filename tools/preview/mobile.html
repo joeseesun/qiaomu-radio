@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh">
+<meta charset="utf-8">
+<title>Mobile Browse layout fixture — not a device test</title>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="styles.css">
+<style>
+  html, body { margin: 0; overflow: auto; }
+  #fixture { position: relative; width: var(--fixture-width); height: var(--fixture-height); }
+  #navbar { position: absolute; bottom: var(--navbar-bottom-offset); height: var(--navbar-height); left: 10%; width: 80%; background: #555; border-radius: 30px; z-index: 20; }
+  .is-hidden-nav #navbar { display: none; }
+</style>
+<body class="is-mobile is-phone is-floating-nav theme-dark">
+<div id="fixture">
+  <div class="qiaomu-radio" data-theme="classic">
+    <div class="qiaomu-radio__browse-layer">
+      <div class="qiaomu-radio__browse-panel" role="dialog" aria-labelledby="heading">
+        <div class="qiaomu-radio__browse-head"><h2 id="heading">浏览电台</h2><button>关闭</button></div>
+        <div class="qiaomu-radio__browse-body" id="choices"></div>
+        <div class="qiaomu-radio__browse-footer"><button class="qiaomu-radio__browse-reset">重置筛选</button><button class="qiaomu-radio__browse-apply">查看电台</button></div>
+      </div>
+    </div>
+  </div>
+  <div id="navbar">Obsidian navigation fixture</div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const width = Math.max(280, Math.min(1200, Number(params.get('width')) || 390));
+  const height = Math.max(280, Math.min(1200, Number(params.get('height')) || 844));
+  document.body.style.setProperty('--fixture-width', width + 'px');
+  document.body.style.setProperty('--fixture-height', height + 'px');
+  document.body.style.setProperty('--navbar-height', '48px');
+  document.body.style.setProperty('--navbar-bottom-offset', '20px');
+  document.body.style.setProperty('--safe-area-inset-bottom', '20px');
+  document.body.classList.toggle('is-hidden-nav', params.has('hidden'));
+  document.querySelector('.qiaomu-radio').dir = params.has('rtl') ? 'rtl' : 'ltr';
+  for (const title of ['音乐', '内容', '声音', '语言', '地区']) {
+    const section = document.createElement('section');
+    const heading = document.createElement('h3'); heading.textContent = title; section.append(heading);
+    const choices = document.createElement('div'); choices.className = 'qiaomu-radio__browse-choices';
+    for (const label of ['自然声音', '爵士', '古典', '世界音乐', '环境氛围', '所有语言和地区']) {
+      const button = document.createElement('button'); button.textContent = label; choices.append(button);
+    }
+    section.append(choices); document.querySelector('#choices').append(section);
+  }
+</script>
+</body>
+</html>

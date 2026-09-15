@@ -434,7 +434,6 @@
 }
 
 .qiaomu-radio__channels {
-  gap: 5px;
   margin: 16px 0 24px;
   flex-wrap: wrap;
   gap: 8px 20px;
@@ -1049,6 +1048,36 @@
   .qiaomu-radio__browse-choices button { min-height: 44px; }
 }
 
+/* Obsidian's floating phone navbar overlays custom views, unlike the normal
+   in-flow navbar. Reserve its height as well as the system safe area without
+   changing or hiding any host UI. Tablet/desktop panes have no phone navbar. */
+.is-mobile .qiaomu-radio {
+  --qr-browse-bottom-clearance: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+}
+.is-phone.is-floating-nav:not(.is-hidden-nav) .qiaomu-radio,
+.is-phone.auto-full-screen:not(.is-hidden-nav) .qiaomu-radio {
+  --qr-browse-bottom-clearance: calc(var(--navbar-height, 48px) + max(0px, var(--navbar-bottom-offset, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))));
+}
+.is-mobile .qiaomu-radio .qiaomu-radio__browse-layer,
+.is-mobile .qiaomu-radio[dir="rtl"] .qiaomu-radio__browse-layer {
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--qr-browse-bottom-clearance));
+  background: rgb(0 0 0 / 12%);
+}
+.is-mobile .qiaomu-radio__browse-panel {
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+.is-mobile .qiaomu-radio__browse-body {
+  flex: 1 1 auto;
+}
+.is-mobile .qiaomu-radio__browse-choices button {
+  min-height: 44px;
+}
+
 /* One physical device: fixed proportions, independent of the host's button skin. */
 .qiaomu-radio[data-theme="pocket"] { --qr-accent: #45543b; color-scheme: light; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__shell { padding: 18px; }
@@ -1101,4 +1130,27 @@
 
 @media (prefers-reduced-motion: reduce) {
   .qiaomu-radio__transport > button { transition-duration: 0ms; }
+}
+
+/* Keep trailing content reachable behind the host's floating navigation. */
+.is-mobile .qiaomu-radio__station-list {
+  padding-bottom: calc(12px + var(--qr-browse-bottom-clearance));
+  scroll-padding-bottom: calc(12px + var(--qr-browse-bottom-clearance));
+}
+.is-mobile .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__shell {
+  align-items: safe center;
+  padding-bottom: calc(18px + var(--qr-browse-bottom-clearance));
+}
+.is-mobile .qiaomu-radio__search input,
+.is-mobile .qiaomu-radio__ipod-search input { font-size: 16px; }
+.is-mobile .qiaomu-radio__modes button,
+.is-mobile .qiaomu-radio__channels button,
+.is-mobile .qiaomu-radio__station-like { min-height: 44px; }
+.is-mobile .qiaomu-radio__station { grid-template-columns: 26px minmax(0, 1fr) 44px; }
+.is-mobile .qiaomu-radio__station-like { min-width: 44px; }
+.is-mobile .qiaomu-radio__browse-footer { flex-wrap: wrap; }
+.is-mobile .qiaomu-radio__browse-footer button { flex: 1 1 auto; white-space: normal; }
+@media (max-height: 500px) {
+  .is-mobile .qiaomu-radio__body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+  .is-mobile .qiaomu-radio__player { overflow-y: auto; }
 }
