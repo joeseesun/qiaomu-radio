@@ -7,6 +7,11 @@
   overflow: hidden;
 }
 
+/* The phone host reserves top space for its header even when this view hides it. */
+.is-phone .mod-root .workspace-leaf-content[data-type="qiaomu-radio-view"] > .view-content {
+  margin-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+}
+
 .qiaomu-radio {
   position: relative;
   --qr-accent: #d86d43;
