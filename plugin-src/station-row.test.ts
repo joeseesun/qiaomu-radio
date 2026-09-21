@@ -77,9 +77,10 @@ describe("immersive player and list contract", () => {
   const css = readFileSync(fileURLToPath(new URL("../styles.css", import.meta.url)), "utf8");
   const viewSource = readFileSync(fileURLToPath(new URL("./radio-view.ts", import.meta.url)), "utf8");
 
-  it("hides the host view header and removes extra content padding", () => {
+  it("hides the host view header but keeps only the phone status-bar safe area", () => {
     expect(css).toMatch(/\.workspace-leaf-content\[data-type="qiaomu-radio-view"\] > \.view-header\s*{[^}]*display: none;/);
     expect(css).toMatch(/\.workspace-leaf-content\[data-type="qiaomu-radio-view"\] > \.view-content\s*{[^}]*padding: 0;/);
+    expect(css).toMatch(/\.is-phone \.mod-root \.workspace-leaf-content\[data-type="qiaomu-radio-view"\] > \.view-content\s*{[^}]*margin-top: var\(--safe-area-inset-top, env\(safe-area-inset-top, 0px\)\);/);
   });
 
   it("keeps the original player frameless inside the view", () => {

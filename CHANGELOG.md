@@ -2,6 +2,10 @@
 
 All notable changes to Qiaomu Radio are documented here.
 
+## 1.1.4 - 2026-09-21
+
+- Remove the unused phone header spacing above the radio player while retaining the system status-bar safe area. Desktop layout and playback are unchanged.
+
 ## 1.1.3 - 2026-09-15
 
 - Mobile Browse actions and trailing station rows clear Obsidian's floating navigation and system safe area; hidden navigation releases its reserved space.
