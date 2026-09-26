@@ -109,6 +109,7 @@ const EN: Record<string, string> = {
   "暂时联系不上电台目录。": "Cannot reach the directory. Please retry.", "暂时联系不上全球电台目录。": "Cannot reach the directory. Please retry.", "暂时联系不上分类目录，请重试或切换分类。": "Cannot reach the category directory. Retry or choose another category.",
   "已切换到乔木电台的备用目录。": "Using the backup station directory.", "请点击播放按钮开始收听。": "Press Play to start listening.", "这家电台暂时无法播放。": "This station is unavailable.", "直播中断，正在尝试下一家。": "Stream interrupted. Trying the next station.",
   "这家电台暂时无法连接，正在尝试下一家。": "Station unavailable. Trying the next station.", "已取消喜欢": "Removed from favorites", "已加入喜欢": "Added to favorites",
+  "继续听": "Keep listening", "暂停": "Pause", "播放": "Play", "正在播放": "Playing", "直播中": "Live", "喜欢的电台": "Favorite",
   "打开乔木电台": "Open Qiaomu Radio", "打开电台": "Open radio", "在线电台": "Web player",
   "每次新开电台页时首先显示的频道。": "The channel shown when opening a new radio tab.", "播放器主题会保存在当前 Vault。": "Player appearance is saved in this vault.", "音量调整会立即保存。": "Volume changes are saved immediately.",
   "电台目录来自 Radio Browser，播放偏好只保存在当前 Vault 的插件数据中。": "Directory by Radio Browser. Listening preferences stay in this vault.", "版本": "Version",
