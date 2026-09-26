@@ -6,6 +6,8 @@ import { EMPTY_PROFILE, rankStations, recordPlay, recordSkip, setLiked } from ".
 import { normalizeTheme, RADIO_THEMES, type RadioThemeId } from "./themes";
 import type { MoodId, RadioData, Station } from "./types";
 import { resolveLocale, translate, UI_LANGUAGES, type LanguageSetting } from "./i18n";
+import { createHomeProvider } from "./home";
+import { notifyHomeChanged } from "./qiaomu-home";
 
 const DEFAULT_DATA: RadioData = {
   settings: {
@@ -31,10 +33,19 @@ export default class QiaomuRadioPlugin extends Plugin {
   private queueIndex = -1;
   private playGeneration = 0;
   private pendingStationId: string | null = null;
+  /** Shows the live station and recent stations on Qiaomu Home; see qiaomu-home.ts. */
+  qiaomuHome = createHomeProvider(this);
 
   async onload(): Promise<void> {
     await this.loadState();
     this.player = new RadioPlayer(this.data.settings.volume);
+    let homeKey = "";
+    this.register(this.player.watch((state) => {
+      const key = `${state.station?.id ?? ""}|${state.status}`;
+      if (key === homeKey) return;
+      homeKey = key;
+      notifyHomeChanged(this.app, this.manifest.id);
+    }));
     this.registerView(RADIO_VIEW_TYPE, (leaf) => new QiaomuRadioView(leaf, this));
     this.addRibbonIcon("radio-tower", this.t("打开乔木电台"), () => void this.activateView());
     this.addCommand({ id: "open-radio", name: this.t("打开电台"), callback: () => void this.activateView() });

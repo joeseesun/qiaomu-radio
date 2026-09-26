@@ -13,6 +13,7 @@ export class RadioPlayer {
   private failed = false;
   private hls: Hls | null = null;
   private listener: StateListener | null = null;
+  private watchers = new Set<StateListener>();
   private state: PlayerState;
 
   constructor(volume: number) {
@@ -31,6 +32,12 @@ export class RadioPlayer {
     return () => {
       if (this.listener === listener) this.listener = null;
     };
+  }
+
+  /** Extra observers (e.g. Qiaomu Home) that must not replace the view's own subscription. */
+  watch(listener: StateListener): () => void {
+    this.watchers.add(listener);
+    return () => { this.watchers.delete(listener); };
   }
 
   snapshot(): PlayerState {
@@ -117,6 +124,7 @@ export class RadioPlayer {
     this.audio.removeEventListener("pause", this.handlePause);
     this.audio.removeEventListener("error", this.handleError);
     this.listener = null;
+    this.watchers.clear();
   }
 
   private async startPlayback(): Promise<void> {
@@ -171,6 +179,7 @@ export class RadioPlayer {
   private update(patch: Partial<PlayerState>): void {
     this.state = { ...this.state, ...patch };
     this.listener?.(this.state);
+    for (const watcher of this.watchers) watcher(this.state);
   }
 
   private destroyHls(): void {

@@ -2,6 +2,11 @@
 
 All notable changes to Qiaomu Radio are documented here.
 
+## 1.2.0 - 2026-09-26
+
+- Appear on Qiaomu Home (乔木Home), the Obsidian start page, through the Qiaomu Home Protocol (version 1): the live station with play/pause and recent stations to resume, plus station search in Home's search box.
+- The player accepts extra observers without replacing the radio view's own subscription. Without Qiaomu Home nothing changes.
+
 ## 1.1.4 - 2026-09-21
 
 - Remove the unused phone header spacing above the radio player while retaining the system status-bar safe area. Desktop layout and playback are unchanged.
