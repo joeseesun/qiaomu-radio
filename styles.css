@@ -1159,3 +1159,10 @@
   .is-mobile .qiaomu-radio__body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
   .is-mobile .qiaomu-radio__player { overflow-y: auto; }
 }
+
+/* Hide note metadata only while this plugin owns the active view; no Home dependency. */
+body:has(.workspace-leaf.mod-active > .workspace-leaf-content:is(
+  [data-type="qiaomu-radio-view"]
+)) .status-bar {
+  display: none;
+}
