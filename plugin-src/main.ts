@@ -1,3 +1,4 @@
+import { watchPaneDividers } from "./pane-dividers";
 import { Notice, Plugin, PluginSettingTab, Setting, type App, type WorkspaceLeaf } from "obsidian";
 import { RadioPlayer } from "./player";
 import { RadioService } from "./radio-service";
@@ -37,6 +38,7 @@ export default class QiaomuRadioPlugin extends Plugin {
   qiaomuHome = createHomeProvider(this);
 
   async onload(): Promise<void> {
+    watchPaneDividers(this);
     await this.loadState();
     this.player = new RadioPlayer(this.data.settings.volume);
     let homeKey = "";
