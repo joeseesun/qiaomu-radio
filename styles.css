@@ -1166,3 +1166,8 @@ body:has(.workspace-leaf.mod-active > .workspace-leaf-content:is(
 )) .status-bar {
   display: none;
 }
+
+/* Native pane dividers: preserve drag geometry, adapt only owned boundaries. */
+.workspace-leaf-resize-handle.qiaomu-pane-divider { border-color: var(--divider-color); }
+.workspace-leaf-resize-handle.qiaomu-pane-divider:hover,
+.workspace-leaf-resize-handle.qiaomu-pane-divider:active { border-color: var(--divider-color-hover); }
