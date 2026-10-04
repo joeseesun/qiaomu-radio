@@ -1042,7 +1042,7 @@
 .qiaomu-radio__browse-reset svg { width: 16px; height: 16px; }
 .qiaomu-radio__browse-reset:disabled { opacity: .35; }
 .qiaomu-radio[data-theme="classic"] button.qiaomu-radio__browse-apply,
-.qiaomu-radio[data-theme="classic"] button.qiaomu-radio__browse-apply:hover { min-height: 44px; padding: 10px 18px; background: var(--qr-accent); color: white; border-radius: 8px; }
+.qiaomu-radio[data-theme="classic"] button.qiaomu-radio__browse-apply:hover { min-height: 44px; padding: 10px 18px; background: var(--text-normal); color: var(--background-primary); border-radius: 8px; }
 .qiaomu-radio__browse-trigger { max-width: 100%; }
 .qiaomu-radio__browse-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qiaomu-radio[dir="rtl"] .qiaomu-radio__browse-layer { padding: 132px 36% 24px 24px; }
@@ -1091,7 +1091,7 @@
 .qiaomu-radio__ipod-menu-row { min-height: 30px; padding: 4px 12px; font-size: 14px; line-height: 1.5; }
 .qiaomu-radio__ipod-screen-bar { min-height: 34px; }
 .qiaomu-radio__ipod-screen-bar strong { font-size: 15px; }
-.qiaomu-radio__ipod-top > span { color: #969b90; font-size: 17px; font-weight: 600; }
+.qiaomu-radio__ipod-top > span { color: #626b59; font-size: 17px; font-weight: 600; }
 .qiaomu-radio__ipod-volume { min-height: 44px; padding: 0 12px; font-variant-numeric: tabular-nums; }
 .qiaomu-radio__wheel { width: 216px; height: 216px; margin-top: 26px; }
 .qiaomu-radio__wheel-menu { top: 15px; left: 62px; right: 62px; }
@@ -1103,7 +1103,7 @@
 .qiaomu-radio__wheel-toggle > span > svg { width: 16px; height: 18px; }
 .qiaomu-radio__wheel .qiaomu-radio__wheel-center { width: 82px; height: 82px; top: 66px; left: 66px; }
 .qiaomu-radio[data-theme="pocket"] button:not(.clickable-icon) { background: transparent; border: 0; border-radius: 0; box-shadow: none; color: #45543b; }
-.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:not(.clickable-icon) { color: #8d9683; }
+.qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button:not(.clickable-icon) { color: #626d57; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__wheel button.qiaomu-radio__wheel-center { border: 1px solid #c5cdba; border-radius: 50%; corner-shape: round; background: #f6f7f1; }
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button.is-highlighted,
 .qiaomu-radio[data-theme="pocket"] .qiaomu-radio__ipod-screen button.is-highlighted:hover {
