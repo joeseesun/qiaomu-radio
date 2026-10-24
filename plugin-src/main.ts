@@ -1,3 +1,5 @@
+import { UpdateNotes } from './update-notes';
+import { UPDATE_ENTRIES } from './update-notes-release';
 import { watchPaneDividers } from "./pane-dividers";
 import { Notice, Plugin, PluginSettingTab, Setting, type App, type WorkspaceLeaf } from "obsidian";
 import { RadioPlayer } from "./player";
@@ -21,6 +23,7 @@ const DEFAULT_DATA: RadioData = {
 };
 
 export default class QiaomuRadioPlugin extends Plugin {
+  updateNotes!: UpdateNotes;
   t(source: string): string { return translate(source, resolveLocale(this.data.settings.language)); }
   setLanguage(language: LanguageSetting): void {
     this.data.settings.language = language;
@@ -56,6 +59,7 @@ export default class QiaomuRadioPlugin extends Plugin {
       if (!checking) this.player.toggle();
       return true;
     } });
+    this.updateNotes = new UpdateNotes(this, UPDATE_ENTRIES, () => resolveLocale(this.data.settings.language));
     this.addSettingTab(new RadioSettingTab(this.app, this));
   }
 
@@ -213,6 +217,7 @@ class RadioSettingTab extends PluginSettingTab {
     new Setting(this.containerEl).setName(t("关于")).setHeading();
     const about = this.containerEl.createDiv({ cls: "qiaomu-radio-settings__about" });
     about.createEl("p", { text: `${t("版本")} ${this.plugin.manifest.version} · ${t("电台目录来自 Radio Browser，播放偏好只保存在当前 Vault 的插件数据中。")}` });
+    this.plugin.updateNotes.addButton(about);
     const links = about.createDiv({ cls: "qiaomu-radio-settings__links" });
     links.createEl("a", { text: "GitHub issues", href: "https://github.com/joeseesun/qiaomu-radio/issues" });
     links.createEl("a", { text: t("在线电台"), href: "https://radio.qiaomu.ai/" });
