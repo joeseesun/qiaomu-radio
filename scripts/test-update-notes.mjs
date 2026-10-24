@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { build } from 'esbuild';
-const dir = process.cwd().endsWith('/radio') ? 'plugin-src' : 'src';
+const dir = 'plugin-src';
 const result = await build({ entryPoints: [`${dir}/update-notes.ts`], bundle: true, write: false, format: 'cjs', platform: 'node', external: ['obsidian'] });
 const notices = [], dialogs = [], timers = new Map();
 let serial = 0, blocked = false;
